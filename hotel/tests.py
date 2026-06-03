@@ -1898,3 +1898,180 @@ class StaffRoomVisibilityTests(TestCase):
         self.assertContains(response, "V02")
         # guest_room fallback should be None since ticket.room is set
         self.assertIsNone(response.context["guest_room"])
+
+
+class UnavailableDateRangesTests(TestCase):
+    def setUp(self):
+        self.room_type = RoomType.objects.create(
+            name="Unavail Suite", description="Test",
+            price_per_night=Decimal("150"), capacity=2,
+        )
+        self.room1 = Room.objects.create(
+            room_number="U01", room_type=self.room_type, floor=1, status="available",
+        )
+        self.room2 = Room.objects.create(
+            room_number="U02", room_type=self.room_type, floor=1, status="available",
+        )
+        self.guest = User.objects.create_user(
+            username="unavail_guest", password="test123", role="guest"
+        )
+
+    def test_no_ranges_when_all_rooms_available(self):
+        ranges = self.room_type.get_unavailable_date_ranges(
+            date(2035, 8, 1), date(2035, 8, 10)
+        )
+        self.assertEqual(ranges, [])
+
+    def test_ranges_when_all_rooms_booked(self):
+        RoomReservation.objects.create(
+            guest=self.guest, room_type=self.room_type, room=self.room1,
+            check_in=date(2035, 8, 5), check_out=date(2035, 8, 8),
+            number_of_guests=1, status="confirmed",
+        )
+        RoomReservation.objects.create(
+            guest=self.guest, room_type=self.room_type, room=self.room2,
+            check_in=date(2035, 8, 5), check_out=date(2035, 8, 8),
+            number_of_guests=1, status="confirmed",
+        )
+        ranges = self.room_type.get_unavailable_date_ranges(
+            date(2035, 8, 1), date(2035, 8, 10)
+        )
+        self.assertTrue(any(r[0] <= date(2035, 8, 5) < r[1] for r in ranges))
+
+    def test_cancelled_does_not_create_unavailable_range(self):
+        RoomReservation.objects.create(
+            guest=self.guest, room_type=self.room_type, room=self.room1,
+            check_in=date(2035, 8, 5), check_out=date(2035, 8, 8),
+            number_of_guests=1, status="cancelled",
+        )
+        RoomReservation.objects.create(
+            guest=self.guest, room_type=self.room_type, room=self.room2,
+            check_in=date(2035, 8, 5), check_out=date(2035, 8, 8),
+            number_of_guests=1, status="cancelled",
+        )
+        ranges = self.room_type.get_unavailable_date_ranges(
+            date(2035, 8, 1), date(2035, 8, 10)
+        )
+        self.assertEqual(ranges, [])
+
+    def test_completed_does_not_create_unavailable_range(self):
+        RoomReservation.objects.create(
+            guest=self.guest, room_type=self.room_type, room=self.room1,
+            check_in=date(2035, 8, 5), check_out=date(2035, 8, 8),
+            number_of_guests=1, status="completed",
+        )
+        RoomReservation.objects.create(
+            guest=self.guest, room_type=self.room_type, room=self.room2,
+            check_in=date(2035, 8, 5), check_out=date(2035, 8, 8),
+            number_of_guests=1, status="completed",
+        )
+        ranges = self.room_type.get_unavailable_date_ranges(
+            date(2035, 8, 1), date(2035, 8, 10)
+        )
+        self.assertEqual(ranges, [])
+
+
+class AvailabilityApiTests(TestCase):
+    def setUp(self):
+        self.room_type = RoomType.objects.create(
+            name="API Suite", description="Test",
+            price_per_night=Decimal("180"), capacity=2,
+        )
+        self.room1 = Room.objects.create(
+            room_number="API01", room_type=self.room_type, floor=1, status="available",
+        )
+        self.room2 = Room.objects.create(
+            room_number="API02", room_type=self.room_type, floor=1, status="available",
+        )
+        self.guest = User.objects.create_user(
+            username="api_guest", password="test123", role="guest"
+        )
+
+    def test_api_returns_available_count(self):
+        response = self.client.get(
+            reverse("hotel:room_type_availability_api", args=[self.room_type.id]),
+            {"check_in": "2035-09-01", "check_out": "2035-09-03"},
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data["available_count"], 2)
+        self.assertEqual(data["total_rooms"], 2)
+        self.assertTrue(data["is_available"])
+
+    def test_api_returns_zero_when_fully_booked(self):
+        RoomReservation.objects.create(
+            guest=self.guest, room_type=self.room_type, room=self.room1,
+            check_in=date(2035, 9, 5), check_out=date(2035, 9, 8),
+            number_of_guests=1, status="confirmed",
+        )
+        RoomReservation.objects.create(
+            guest=self.guest, room_type=self.room_type, room=self.room2,
+            check_in=date(2035, 9, 5), check_out=date(2035, 9, 8),
+            number_of_guests=1, status="confirmed",
+        )
+        response = self.client.get(
+            reverse("hotel:room_type_availability_api", args=[self.room_type.id]),
+            {"check_in": "2035-09-05", "check_out": "2035-09-08"},
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data["available_count"], 0)
+        self.assertFalse(data["is_available"])
+        self.assertIn("available", data["message"])
+
+    def test_api_requires_dates(self):
+        response = self.client.get(
+            reverse("hotel:room_type_availability_api", args=[self.room_type.id]),
+        )
+        self.assertEqual(response.status_code, 400)
+
+    def test_api_rejects_invalid_dates(self):
+        response = self.client.get(
+            reverse("hotel:room_type_availability_api", args=[self.room_type.id]),
+            {"check_in": "invalid", "check_out": "2035-09-03"},
+        )
+        self.assertEqual(response.status_code, 400)
+
+    def test_api_rejects_checkout_before_checkin(self):
+        response = self.client.get(
+            reverse("hotel:room_type_availability_api", args=[self.room_type.id]),
+            {"check_in": "2035-09-10", "check_out": "2035-09-05"},
+        )
+        self.assertEqual(response.status_code, 400)
+
+
+class BookingBlocksFullyBookedDatesTests(TestCase):
+    def setUp(self):
+        self.room_type = RoomType.objects.create(
+            name="Block Suite", description="Test",
+            price_per_night=Decimal("160"), capacity=2,
+        )
+        self.room1 = Room.objects.create(
+            room_number="B01", room_type=self.room_type, floor=1, status="available",
+        )
+        self.guest = User.objects.create_user(
+            username="block_guest", password="test123", role="guest"
+        )
+
+    def test_backend_blocks_fully_booked_dates(self):
+        # Pre-book the only active room
+        RoomReservation.objects.create(
+            guest=self.guest, room_type=self.room_type, room=self.room1,
+            check_in=date(2035, 10, 5), check_out=date(2035, 10, 8),
+            number_of_guests=1, status="confirmed",
+        )
+        # Try to book when no rooms are available
+        self.client.login(username="block_guest", password="test123")
+        session = self.client.session
+        session["reservation_data"] = {
+            "room_type_id": self.room_type.id,
+            "check_in": "2035-10-05",
+            "check_out": "2035-10-08",
+            "guests": 1,
+        }
+        session.save()
+        response = self.client.post(
+            reverse("hotel:confirm_reservation"),
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, reverse("hotel:start_reservation"))

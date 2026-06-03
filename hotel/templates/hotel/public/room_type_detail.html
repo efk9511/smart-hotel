@@ -62,6 +62,57 @@
                     </a>
                 </div>
             </div>
+
+            <div class="card shadow-sm mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-calendar-range"></i> Room Availability</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <div class="text-center p-3 rounded bg-light">
+                                <small class="text-muted d-block">Total Rooms</small>
+                                <span class="fs-3 fw-bold">{{ total_rooms }}</span>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center p-3 rounded bg-light">
+                                <small class="text-muted d-block">Currently Available</small>
+                                <span class="fs-3 fw-bold {% if available_rooms > 0 %}text-success{% else %}text-danger{% endif %}">{{ available_rooms }}</span>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center p-3 rounded bg-light">
+                                <small class="text-muted d-block">Fully Booked Dates</small>
+                                <span class="fs-3 fw-bold {% if unavailable_ranges %}text-danger{% else %}text-success{% endif %}">{{ unavailable_ranges|length }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if unavailable_ranges %}
+                    <hr>
+                    <h6 class="fw-bold text-danger"><i class="bi bi-exclamation-triangle"></i> Fully Booked Date Ranges</h6>
+                    <p class="text-muted small">All rooms of this type are booked or unavailable on these dates:</p>
+                    <ul class="list-group list-group-flush">
+                        {% for range_start, range_end in unavailable_ranges %}
+                        <li class="list-group-item d-flex align-items-center">
+                            <i class="bi bi-calendar-x text-danger me-2"></i>
+                            <span>{{ range_start|date:"F j, Y" }} &ndash; {{ range_end|date:"F j, Y" }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    <p class="text-muted small mt-2">
+                        <i class="bi bi-info-circle"></i>
+                        These dates are blocked by existing reservations. Please choose dates outside these ranges.
+                    </p>
+                    {% else %}
+                    <hr>
+                    <div class="alert alert-success mb-0">
+                        <i class="bi bi-check-circle"></i> No fully booked date ranges found in the upcoming months. Rooms are available for booking.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
         </div>
     </div>
 </div>

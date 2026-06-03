@@ -101,11 +101,16 @@ Role checks are also done in templates via `user.is_guest`, `user.is_manager`, a
 
 1. **Browse**: Visitor views room types on public pages
 2. **Select**: Visitor selects a room type, check-in/out dates on `/reserve/`
-3. **Session Storage**: Room type ID, dates, and guest count stored in session
-4. **Auth Check**: If not logged in, redirected to login/register with reservation data preserved
-5. **Confirmation**: Logged-in user sees price summary on `/reserve/confirm/`
-6. **Complete**: On confirmation, RoomReservation created with status "confirmed"
-7. **Cleanup**: Session data cleared after successful reservation
+3. **Availability Preview**: Before booking, guests see:
+   - Unavailable date ranges (fully booked) for each room type
+   - Live availability check when selecting dates via JSON API
+4. **Session Storage**: Room type ID, dates, and guest count stored in session
+5. **Auth Check**: If not logged in, redirected to login/register with reservation data preserved
+6. **Confirmation**: Logged-in user sees price summary on `/reserve/confirm/`
+7. **Complete**: On confirmation, RoomReservation created with status "confirmed"
+8. **Cleanup**: Session data cleared after successful reservation
+
+Guests can see unavailable dates before booking on both the room type detail page and the booking form. Availability is validated on the backend — frontend checks are supplemental. Pending and confirmed reservations block dates; cancelled and completed reservations do not.
 
 This flow ensures a seamless booking experience while requiring authentication only at the final step.
 

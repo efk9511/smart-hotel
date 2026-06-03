@@ -47,11 +47,11 @@
                     </div>
                     {% if available_rooms_count > 0 %}
                     <div class="alert alert-success">
-                        <i class="bi bi-check-circle"></i> <strong>{{ available_rooms_count }}</strong> room(s) available for your selected dates.
+                        <i class="bi bi-check-circle"></i> <strong>{{ available_rooms_count }}</strong> of <strong>{{ total_rooms }}</strong> room(s) available for your selected dates.
                     </div>
                     {% else %}
                     <div class="alert alert-danger">
-                        <i class="bi bi-exclamation-triangle"></i> No rooms available for the selected dates.
+                        <i class="bi bi-exclamation-triangle"></i> No rooms available for the selected dates. <strong>0</strong> of <strong>{{ total_rooms }}</strong> rooms free.
                     </div>
                     {% endif %}
                     <div class="alert alert-info">

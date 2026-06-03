@@ -57,6 +57,37 @@ def api_common_areas(request):
     return Response(serializer.data)
 
 
+def room_type_availability_api(request, pk):
+    room_type = get_object_or_404(RoomType, pk=pk, is_active=True)
+    check_in = request.GET.get("check_in")
+    check_out = request.GET.get("check_out")
+
+    if not check_in or not check_out:
+        return JsonResponse({"error": "check_in and check_out are required"}, status=400)
+
+    try:
+        ci = date.fromisoformat(check_in)
+        co = date.fromisoformat(check_out)
+    except (ValueError, TypeError):
+        return JsonResponse({"error": "Invalid date format"}, status=400)
+
+    if co <= ci:
+        return JsonResponse({"error": "check_out must be after check_in"}, status=400)
+
+    available_count = room_type.get_available_rooms(ci, co).count()
+    total_rooms = room_type.rooms.filter(is_active=True).count()
+    unavailable_count = total_rooms - available_count
+    is_available = available_count > 0
+
+    return JsonResponse({
+        "available_count": available_count,
+        "total_rooms": total_rooms,
+        "unavailable_count": unavailable_count,
+        "is_available": is_available,
+        "message": "" if is_available else "No rooms of this type are available for the selected dates.",
+    })
+
+
 # ─── Theme ─────────────────────────────────────────────────────────────────────
 
 def toggle_theme(request):
@@ -138,9 +169,13 @@ def room_type_list(request):
 def room_type_detail(request, pk):
     room_type = get_object_or_404(RoomType, pk=pk, is_active=True)
     available = room_type.available_rooms_count()
+    unavailable_ranges = room_type.get_unavailable_date_ranges()
+    total_rooms = room_type.rooms.filter(is_active=True).count()
     return render(request, "hotel/public/room_type_detail.html", {
         "room_type": room_type,
         "available_rooms": available,
+        "total_rooms": total_rooms,
+        "unavailable_ranges": unavailable_ranges,
     })
 
 
@@ -213,6 +248,14 @@ def start_reservation(request):
         except (ValueError, TypeError):
             pass
 
+    unavailable_ranges = []
+    selected_total_rooms = 0
+    selected_avail_rooms = 0
+    if selected_type:
+        unavailable_ranges = selected_type.get_unavailable_date_ranges()
+        selected_total_rooms = selected_type.rooms.filter(is_active=True).count()
+        selected_avail_rooms = selected_type.available_rooms_count()
+
     return render(request, "hotel/public/start_reservation.html", {
         "room_types": room_types,
         "selected_type": selected_type,
@@ -220,6 +263,9 @@ def start_reservation(request):
         "check_out": check_out,
         "today": timezone.now().date(),
         "room_type_availability": room_type_availability,
+        "unavailable_ranges": unavailable_ranges,
+        "selected_total_rooms": selected_total_rooms,
+        "selected_avail_rooms": selected_avail_rooms,
     })
 
 
@@ -263,6 +309,8 @@ def confirm_reservation(request):
         messages.success(request, "Reservation confirmed! Thank you for booking with Seaside Hotel.")
         return redirect("hotel:my_room_reservation_detail", pk=reservation.pk)
 
+    total_rooms = room_type.rooms.filter(is_active=True).count()
+
     return render(request, "hotel/public/confirm_reservation.html", {
         "room_type": room_type,
         "check_in": check_in,
@@ -271,6 +319,7 @@ def confirm_reservation(request):
         "guests": data["guests"],
         "total_price": total_price,
         "available_rooms_count": available_count,
+        "total_rooms": total_rooms,
     })
 
 
