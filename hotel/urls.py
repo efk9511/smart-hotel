@@ -79,4 +79,5 @@ urlpatterns = [
     path("api/room-types/", views.api_room_types, name="api_room_types"),
     path("api/common-areas/", views.api_common_areas, name="api_common_areas"),
     path("rooms/<int:pk>/availability/", views.room_type_availability_api, name="room_type_availability_api"),
+    path("rooms/<int:pk>/calendar-availability/", views.calendar_availability_api, name="calendar_availability_api"),
 ]

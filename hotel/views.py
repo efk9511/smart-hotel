@@ -88,6 +88,22 @@ def room_type_availability_api(request, pk):
     })
 
 
+def calendar_availability_api(request, pk):
+    room_type = get_object_or_404(RoomType, pk=pk, is_active=True)
+    start_date = request.GET.get("start_date")
+    end_date = request.GET.get("end_date")
+    if start_date and end_date:
+        try:
+            start_date = date.fromisoformat(start_date)
+            end_date = date.fromisoformat(end_date)
+        except (ValueError, TypeError):
+            return JsonResponse({"error": "Invalid date format"}, status=400)
+        unavailable = room_type.get_calendar_unavailable_dates(start_date, end_date)
+    else:
+        unavailable = room_type.get_calendar_unavailable_dates()
+    return JsonResponse({"unavailable_dates": unavailable})
+
+
 # ─── Theme ─────────────────────────────────────────────────────────────────────
 
 def toggle_theme(request):
@@ -249,12 +265,14 @@ def start_reservation(request):
             pass
 
     unavailable_ranges = []
+    calendar_unavailable_dates = "[]"
     selected_total_rooms = 0
     selected_avail_rooms = 0
     if selected_type:
         unavailable_ranges = selected_type.get_unavailable_date_ranges()
         selected_total_rooms = selected_type.rooms.filter(is_active=True).count()
         selected_avail_rooms = selected_type.available_rooms_count()
+        calendar_unavailable_dates = json.dumps(selected_type.get_calendar_unavailable_dates())
 
     return render(request, "hotel/public/start_reservation.html", {
         "room_types": room_types,
@@ -266,6 +284,7 @@ def start_reservation(request):
         "unavailable_ranges": unavailable_ranges,
         "selected_total_rooms": selected_total_rooms,
         "selected_avail_rooms": selected_avail_rooms,
+        "calendar_unavailable_dates": calendar_unavailable_dates,
     })
 
 

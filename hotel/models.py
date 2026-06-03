@@ -128,6 +128,59 @@ class RoomType(models.Model):
         ranges.append((range_start, range_end + timedelta(days=1)))
         return ranges
 
+    def get_calendar_unavailable_dates(self, start_date=None, end_date=None, max_days=120):
+        from datetime import timedelta
+        from collections import defaultdict
+
+        today = timezone.now().date()
+        if start_date is None:
+            start_date = today
+        if end_date is None:
+            end_date = start_date + timedelta(days=max_days)
+
+        total_active_rooms = self.rooms.filter(is_active=True).count()
+        if total_active_rooms == 0:
+            return [d.isoformat() for d in self._date_range(start_date, end_date)]
+
+        reservations = RoomReservation.objects.filter(
+            room_type=self,
+            status__in=["pending", "confirmed"],
+            check_in__lt=end_date,
+            check_out__gt=start_date,
+        )
+
+        unavailable_rooms_count = self.rooms.filter(
+            is_active=True
+        ).exclude(status="available").count()
+
+        daily_booked = defaultdict(int)
+        for res in reservations:
+            res_start = max(res.check_in, start_date)
+            res_end = min(res.check_out, end_date)
+            d = res_start
+            while d < res_end:
+                daily_booked[d] += 1
+                d += timedelta(days=1)
+
+        unavailable = []
+        d = start_date
+        while d < end_date:
+            if daily_booked.get(d, 0) + unavailable_rooms_count >= total_active_rooms:
+                unavailable.append(d.isoformat())
+            d += timedelta(days=1)
+
+        return unavailable
+
+    @staticmethod
+    def _date_range(start, end):
+        from datetime import timedelta
+        dates = []
+        d = start
+        while d < end:
+            dates.append(d)
+            d += timedelta(days=1)
+        return dates
+
 
 class Room(models.Model):
     class Status(models.TextChoices):

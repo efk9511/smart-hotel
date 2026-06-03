@@ -2075,3 +2075,131 @@ class BookingBlocksFullyBookedDatesTests(TestCase):
         )
         self.assertEqual(response.status_code, 302)
         self.assertRedirects(response, reverse("hotel:start_reservation"))
+
+
+class CalendarAvailabilityTests(TestCase):
+    def setUp(self):
+        self.room_type = RoomType.objects.create(
+            name="Calendar Suite", description="Test",
+            price_per_night=Decimal("190"), capacity=2,
+        )
+        self.room1 = Room.objects.create(
+            room_number="C01", room_type=self.room_type, floor=1, status="available",
+        )
+        self.room2 = Room.objects.create(
+            room_number="C02", room_type=self.room_type, floor=1, status="available",
+        )
+        self.guest = User.objects.create_user(
+            username="cal_guest", password="test123", role="guest"
+        )
+
+    def test_calendar_endpoint_returns_empty_when_free(self):
+        response = self.client.get(
+            reverse("hotel:calendar_availability_api", args=[self.room_type.id]),
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertIn("unavailable_dates", data)
+        self.assertEqual(data["unavailable_dates"], [])
+
+    def test_calendar_endpoint_returns_booked_dates(self):
+        RoomReservation.objects.create(
+            guest=self.guest, room_type=self.room_type, room=self.room1,
+            check_in=date(2035, 11, 5), check_out=date(2035, 11, 8),
+            number_of_guests=1, status="confirmed",
+        )
+        RoomReservation.objects.create(
+            guest=self.guest, room_type=self.room_type, room=self.room2,
+            check_in=date(2035, 11, 5), check_out=date(2035, 11, 8),
+            number_of_guests=1, status="confirmed",
+        )
+        response = self.client.get(
+            reverse("hotel:calendar_availability_api", args=[self.room_type.id]),
+            {"start_date": "2035-11-01", "end_date": "2035-11-10"},
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertIn("2035-11-05", data["unavailable_dates"])
+        self.assertIn("2035-11-06", data["unavailable_dates"])
+        self.assertIn("2035-11-07", data["unavailable_dates"])
+        self.assertNotIn("2035-11-08", data["unavailable_dates"])
+
+    def test_cancelled_does_not_block_calendar(self):
+        RoomReservation.objects.create(
+            guest=self.guest, room_type=self.room_type, room=self.room1,
+            check_in=date(2035, 11, 10), check_out=date(2035, 11, 13),
+            number_of_guests=1, status="cancelled",
+        )
+        RoomReservation.objects.create(
+            guest=self.guest, room_type=self.room_type, room=self.room2,
+            check_in=date(2035, 11, 10), check_out=date(2035, 11, 13),
+            number_of_guests=1, status="cancelled",
+        )
+        response = self.client.get(
+            reverse("hotel:calendar_availability_api", args=[self.room_type.id]),
+        )
+        data = response.json()
+        self.assertNotIn("2035-11-10", data["unavailable_dates"])
+
+    def test_completed_does_not_block_calendar(self):
+        RoomReservation.objects.create(
+            guest=self.guest, room_type=self.room_type, room=self.room1,
+            check_in=date(2035, 11, 15), check_out=date(2035, 11, 18),
+            number_of_guests=1, status="completed",
+        )
+        RoomReservation.objects.create(
+            guest=self.guest, room_type=self.room_type, room=self.room2,
+            check_in=date(2035, 11, 15), check_out=date(2035, 11, 18),
+            number_of_guests=1, status="completed",
+        )
+        response = self.client.get(
+            reverse("hotel:calendar_availability_api", args=[self.room_type.id]),
+        )
+        data = response.json()
+        self.assertNotIn("2035-11-15", data["unavailable_dates"])
+
+    def test_pending_and_confirmed_block_calendar(self):
+        RoomReservation.objects.create(
+            guest=self.guest, room_type=self.room_type, room=self.room1,
+            check_in=date(2035, 11, 20), check_out=date(2035, 11, 23),
+            number_of_guests=1, status="pending",
+        )
+        RoomReservation.objects.create(
+            guest=self.guest, room_type=self.room_type, room=self.room2,
+            check_in=date(2035, 11, 20), check_out=date(2035, 11, 23),
+            number_of_guests=1, status="confirmed",
+        )
+        response = self.client.get(
+            reverse("hotel:calendar_availability_api", args=[self.room_type.id]),
+            {"start_date": "2035-11-15", "end_date": "2035-11-25"},
+        )
+        data = response.json()
+        self.assertIn("2035-11-20", data["unavailable_dates"])
+        self.assertIn("2035-11-21", data["unavailable_dates"])
+        self.assertIn("2035-11-22", data["unavailable_dates"])
+
+    def test_get_calendar_unavailable_dates_method(self):
+        dates = self.room_type.get_calendar_unavailable_dates(
+            date(2035, 12, 1), date(2035, 12, 5)
+        )
+        self.assertEqual(dates, [])
+
+    def test_get_calendar_unavailable_dates_with_booking(self):
+        RoomReservation.objects.create(
+            guest=self.guest, room_type=self.room_type, room=self.room1,
+            check_in=date(2035, 12, 10), check_out=date(2035, 12, 13),
+            number_of_guests=1, status="confirmed",
+        )
+        RoomReservation.objects.create(
+            guest=self.guest, room_type=self.room_type, room=self.room2,
+            check_in=date(2035, 12, 10), check_out=date(2035, 12, 13),
+            number_of_guests=1, status="confirmed",
+        )
+        dates = self.room_type.get_calendar_unavailable_dates(
+            date(2035, 12, 1), date(2035, 12, 15)
+        )
+        self.assertIn("2035-12-10", dates)
+        self.assertIn("2035-12-11", dates)
+        self.assertIn("2035-12-12", dates)
+        self.assertNotIn("2035-12-13", dates)
+        self.assertNotIn("2035-12-09", dates)
