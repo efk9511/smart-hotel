@@ -3,83 +3,198 @@
 {% block title %}Book a Room{% endblock %}
 {% block extra_css %}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css" media="(prefers-color-scheme: dark)">
 <style>
-.booking-calendar-card .flatpickr-calendar {
-    box-shadow: none !important;
+/* ── Booking Calendar ── */
+.flatpickr-calendar {
+    border-radius: 16px !important;
+    overflow: hidden;
     border: 1px solid var(--border-color) !important;
-    border-radius: 12px !important;
+    box-shadow: 0 16px 40px rgba(15, 23, 42, 0.18) !important;
+    font-family: inherit !important;
     width: 100% !important;
     max-width: 100% !important;
     background: var(--bg-card) !important;
     margin: 0 auto;
 }
-.booking-calendar-card .flatpickr-months {
-    padding: 0.5rem 0.75rem 0 !important;
+
+/* ── Month/year header ── */
+.flatpickr-months {
+    background: #0b2b4a !important;
+    padding: 0.6rem 0.75rem 0.4rem !important;
+    border-radius: 15px 15px 0 0 !important;
 }
-.booking-calendar-card .flatpickr-month {
-    height: 40px !important;
-    color: var(--text-color) !important;
-    fill: var(--text-color) !important;
+.flatpickr-month {
+    height: 36px !important;
+    color: #ffffff !important;
+    fill: #ffffff !important;
 }
-.booking-calendar-card .flatpickr-current-month .flatpickr-monthDropdown-months {
-    color: var(--text-color) !important;
-    background: var(--bg-card) !important;
+.flatpickr-current-month {
+    padding: 0 !important;
+    color: #ffffff !important;
 }
-.booking-calendar-card .flatpickr-weekday {
-    color: var(--text-muted) !important;
-    font-weight: 600 !important;
+.flatpickr-current-month .cur-month {
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    font-size: 1.05rem !important;
 }
-.booking-calendar-card .flatpickr-day {
-    color: var(--text-color) !important;
-    border-radius: 8px !important;
-    margin: 2px !important;
-}
-.booking-calendar-card .flatpickr-day.today {
-    border-color: var(--accent) !important;
+.flatpickr-current-month input.cur-year {
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    font-size: 1.05rem !important;
     background: transparent !important;
 }
-.booking-calendar-card .flatpickr-day.today:hover {
-    background: rgba(43, 169, 166, 0.1) !important;
+.flatpickr-current-month .flatpickr-monthDropdown-months {
+    background: #ffffff !important;
+    color: #0b2b4a !important;
+    border-radius: 6px !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    font-weight: 700 !important;
+    padding: 2px 6px !important;
 }
-.booking-calendar-card .flatpickr-day:hover {
+
+/* ── Nav arrows ── */
+.flatpickr-prev-month,
+.flatpickr-next-month {
+    fill: rgba(255, 255, 255, 0.85) !important;
+    color: rgba(255, 255, 255, 0.85) !important;
+    top: 10px !important;
+}
+.flatpickr-prev-month:hover svg,
+.flatpickr-next-month:hover svg {
+    fill: #ffffff !important;
+}
+
+/* ── Weekday row ── */
+.flatpickr-weekdays {
+    background: #1a3a5c !important;
+    padding: 0.5rem 0 !important;
+}
+span.flatpickr-weekday {
+    background: #1a3a5c !important;
+    color: #e2e8f0 !important;
+    font-weight: 700 !important;
+    font-size: 0.78rem !important;
+}
+
+/* ── Day cells ── */
+.flatpickr-day {
+    color: var(--text-color) !important;
+    border-radius: 10px !important;
+    margin: 2px !important;
+    transition: background 0.15s, color 0.15s !important;
+}
+.flatpickr-day:hover {
     background: rgba(43, 169, 166, 0.12) !important;
 }
-.booking-calendar-card .flatpickr-day.selected,
-.booking-calendar-card .flatpickr-day.startRange,
-.booking-calendar-card .flatpickr-day.endRange,
-.booking-calendar-card .flatpickr-day.inRange {
+
+/* ── Today ── */
+.flatpickr-day.today {
+    border-color: var(--accent) !important;
+    background: transparent !important;
+    font-weight: 700 !important;
+}
+.flatpickr-day.today:hover {
+    background: rgba(43, 169, 166, 0.15) !important;
+}
+.flatpickr-day.today.selected,
+.flatpickr-day.today.startRange,
+.flatpickr-day.today.endRange {
     background: var(--accent) !important;
     border-color: var(--accent) !important;
     color: #fff !important;
+}
+
+/* ── Selected / range ── */
+.flatpickr-day.selected,
+.flatpickr-day.startRange,
+.flatpickr-day.endRange {
+    background: var(--accent) !important;
+    border-color: var(--accent) !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
     box-shadow: none !important;
 }
-.booking-calendar-card .flatpickr-day.inRange {
-    opacity: 0.6 !important;
+.flatpickr-day.inRange {
+    background: rgba(43, 169, 166, 0.18) !important;
+    border-color: rgba(43, 169, 166, 0.18) !important;
+    color: var(--text-color) !important;
+    box-shadow: none !important;
 }
-.booking-calendar-card .flatpickr-day.flatpickr-disabled,
-.booking-calendar-card .flatpickr-day.notAllowed {
-    color: var(--text-muted) !important;
-    opacity: 0.35 !important;
-    text-decoration: line-through !important;
-    cursor: not-allowed !important;
-}
-.booking-calendar-card .flatpickr-day.flatpickr-disabled:hover,
-.booking-calendar-card .flatpickr-day.notAllowed:hover {
-    background: transparent !important;
-}
-.booking-calendar-card .flatpickr-day.selected:hover,
-.booking-calendar-card .flatpickr-day.startRange:hover,
-.booking-calendar-card .flatpickr-day.endRange:hover {
+.flatpickr-day.selected:hover,
+.flatpickr-day.startRange:hover,
+.flatpickr-day.endRange:hover {
     background: var(--accent-dark) !important;
+    border-color: var(--accent-dark) !important;
 }
-.booking-calendar-card .flatpickr-prev-month,
-.booking-calendar-card .flatpickr-next-month {
-    fill: var(--text-color) !important;
+
+/* ── Disabled / fully-booked ── */
+.flatpickr-day.flatpickr-disabled,
+.flatpickr-day.notAllowed,
+.flatpickr-day.prevMonthDay.flatpickr-disabled,
+.flatpickr-day.nextMonthDay.flatpickr-disabled {
+    color: #94a3b8 !important;
+    background: #f1f5f9 !important;
+    text-decoration: line-through !important;
+    opacity: 0.7 !important;
+    cursor: not-allowed !important;
+    border-radius: 10px !important;
 }
-.booking-calendar-card .flatpickr-prev-month:hover,
-.booking-calendar-card .flatpickr-next-month:hover {
-    fill: var(--accent) !important;
+.flatpickr-day.flatpickr-disabled:hover,
+.flatpickr-day.notAllowed:hover {
+    background: #f1f5f9 !important;
+    color: #94a3b8 !important;
+}
+
+/* ── Empty / outside current month ── */
+.flatpickr-day.prevMonthDay,
+.flatpickr-day.nextMonthDay {
+    opacity: 0.35 !important;
+}
+
+/* ── Dark mode ── */
+[data-bs-theme="dark"] .flatpickr-calendar {
+    background: #0f172a !important;
+    border-color: rgba(248, 250, 252, 0.15) !important;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5) !important;
+}
+[data-bs-theme="dark"] .flatpickr-months {
+    background: #0c1e32 !important;
+}
+[data-bs-theme="dark"] .flatpickr-weekdays {
+    background: #162a44 !important;
+}
+[data-bs-theme="dark"] span.flatpickr-weekday {
+    background: #162a44 !important;
+    color: #cbd5e1 !important;
+}
+[data-bs-theme="dark"] .flatpickr-current-month input.cur-year {
+    color: #f1f5f9 !important;
+}
+[data-bs-theme="dark"] .flatpickr-current-month .cur-month {
+    color: #f1f5f9 !important;
+}
+[data-bs-theme="dark"] .flatpickr-day {
+    color: #e2e8f0 !important;
+}
+[data-bs-theme="dark"] .flatpickr-day.inRange {
+    background: rgba(43, 169, 166, 0.25) !important;
+    color: #f8fafc !important;
+}
+[data-bs-theme="dark"] .flatpickr-day.flatpickr-disabled,
+[data-bs-theme="dark"] .flatpickr-day.notAllowed {
+    color: #64748b !important;
+    background: #1e293b !important;
+}
+[data-bs-theme="dark"] .flatpickr-day.flatpickr-disabled:hover,
+[data-bs-theme="dark"] .flatpickr-day.notAllowed:hover {
+    background: #1e293b !important;
+    color: #64748b !important;
+}
+[data-bs-theme="dark"] .flatpickr-day:hover {
+    background: rgba(43, 169, 166, 0.18) !important;
+}
+[data-bs-theme="dark"] .flatpickr-day.today:hover {
+    background: rgba(43, 169, 166, 0.2) !important;
 }
 .booking-summary {
     background: var(--bg-card);
