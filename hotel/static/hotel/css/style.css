@@ -253,6 +253,103 @@ a:hover {
     border-radius: 10px;
 }
 
+/* Global floating message container */
+.message-container {
+    position: fixed;
+    top: 85px;
+    right: 24px;
+    z-index: 2000;
+    width: min(420px, calc(100% - 32px));
+    pointer-events: none;
+}
+
+.message-container .app-alert {
+    pointer-events: auto;
+}
+
+/* Custom alert box styling */
+.app-alert {
+    border-radius: 14px;
+    padding: 14px 18px;
+    margin-bottom: 12px;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.18);
+    font-weight: 600;
+    border: 1px solid transparent;
+    display: flex;
+    align-items: center;
+}
+
+.app-alert .btn-close {
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+/* Light mode alerts */
+.app-alert {
+    background: #ffffff;
+    color: #0f172a;
+    border-color: rgba(15, 23, 42, 0.12);
+}
+
+/* Dark mode alerts */
+[data-bs-theme="dark"] .app-alert,
+body.dark-theme .app-alert {
+    background: #1e252b;
+    color: #f8fafc;
+    border-color: rgba(248, 250, 252, 0.18);
+}
+
+/* Left border accents */
+.app-alert.alert-danger {
+    border-left: 6px solid #dc2626;
+}
+
+.app-alert.alert-warning {
+    border-left: 6px solid #f59e0b;
+}
+
+.app-alert.alert-success {
+    border-left: 6px solid #16a34a;
+}
+
+.app-alert.alert-info {
+    border-left: 6px solid #0284c7;
+}
+
+/* Dark mode icon colours */
+[data-bs-theme="dark"] .app-alert.alert-danger i.bi {
+    color: #f87171;
+}
+
+[data-bs-theme="dark"] .app-alert.alert-warning i.bi {
+    color: #fbbf24;
+}
+
+[data-bs-theme="dark"] .app-alert.alert-success i.bi {
+    color: #4ade80;
+}
+
+[data-bs-theme="dark"] .app-alert.alert-info i.bi {
+    color: #38bdf8;
+}
+
+/* Light mode icon colours */
+.app-alert.alert-danger i.bi {
+    color: #dc2626;
+}
+
+.app-alert.alert-warning i.bi {
+    color: #d97706;
+}
+
+.app-alert.alert-success i.bi {
+    color: #16a34a;
+}
+
+.app-alert.alert-info i.bi {
+    color: #0284c7;
+}
+
 /* Theme toggle */
 .theme-toggle {
     font-size: 1.2rem;

@@ -6,7 +6,7 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
-from django.db.models import Count, Q, Sum
+from django.db.models import Count, Prefetch, Q, Sum
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
@@ -700,30 +700,85 @@ def manager_room_type_delete(request, pk):
 
 @manager_required
 def manager_rooms(request):
-    rooms = Room.objects.select_related("room_type").all().order_by("room_number")
-    status_filter = request.GET.get("status")
-    type_filter = request.GET.get("type")
-    search_query = request.GET.get("q")
+    today = timezone.now().date()
+    room_types = RoomType.objects.filter(is_active=True).prefetch_related(
+        Prefetch("rooms", queryset=Room.objects.all().order_by("room_number"))
+    )
 
-    if status_filter:
-        rooms = rooms.filter(status=status_filter)
-    if type_filter:
-        rooms = rooms.filter(room_type_id=type_filter)
-    if search_query:
-        rooms = rooms.filter(room_number__icontains=search_query)
+    # Gather all room IDs for one-shot reservation query
+    all_room_ids = []
+    for rt in room_types:
+        all_room_ids.extend(rt.rooms.values_list("id", flat=True))
 
-    room_types = RoomType.objects.filter(is_active=True)
-    paginator = Paginator(rooms, 15)
-    page = request.GET.get("page")
-    rooms = paginator.get_page(page)
+    active_reservations = RoomReservation.objects.filter(
+        room_id__in=all_room_ids,
+        status__in=["pending", "confirmed"],
+        check_in__lte=today,
+        check_out__gt=today,
+    ).select_related("guest")
 
-    return render(request, "hotel/manager/rooms.html", {
-        "rooms": rooms,
-        "room_types": room_types,
-        "status_filter": status_filter,
-        "type_filter": type_filter,
-        "search_query": search_query,
+    active_res_map = {}
+    for ar in active_reservations:
+        if ar.room_id not in active_res_map:
+            active_res_map[ar.room_id] = ar
+
+    type_data = []
+    for rt in room_types:
+        rooms = list(rt.rooms.all().order_by("room_number"))
+        counts = {"available": 0, "occupied": 0, "maintenance": 0, "inactive": 0}
+        for room in rooms:
+            status_key = room.status if room.status in counts else "available"
+            counts[status_key] += 1
+        type_data.append({
+            "room_type": rt,
+            "rooms": rooms,
+            "counts": counts,
+            "total": len(rooms),
+        })
+
+    return render(request, "hotel/manager/grouped_rooms.html", {
+        "type_data": type_data,
+        "active_res_map": active_res_map,
+        "today": today,
     })
+
+
+@manager_required
+def manager_room_change_status(request, pk):
+    room = get_object_or_404(Room, pk=pk)
+    if request.method == "POST":
+        new_status = request.POST.get("status")
+        valid_statuses = ["available", "occupied", "maintenance", "inactive"]
+        if new_status not in valid_statuses:
+            messages.error(request, "Invalid status.")
+            return redirect("hotel:manager_rooms")
+
+        today = timezone.now().date()
+        has_active = RoomReservation.objects.filter(
+            room=room,
+            status__in=["pending", "confirmed"],
+            check_in__lte=today,
+            check_out__gt=today,
+        ).exists()
+
+        if new_status == "available" and has_active:
+            messages.error(
+                request,
+                f"Cannot set Room {room.room_number} to Available — it has an active reservation.",
+            )
+            return redirect("hotel:manager_rooms")
+
+        room.status = new_status
+        room.save()
+        messages.success(request, f"Room {room.room_number} status changed to {room.get_status_display()}.")
+
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            from django.http import JsonResponse
+            return JsonResponse({"success": True, "status": new_status, "label": room.get_status_display()})
+
+        return redirect("hotel:manager_rooms")
+
+    return redirect("hotel:manager_rooms")
 
 
 @manager_required

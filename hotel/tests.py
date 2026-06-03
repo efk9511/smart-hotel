@@ -673,6 +673,124 @@ class ManagerRoomCRUDTests(TestCase):
         self.assertFalse(Room.objects.filter(room_number="103").exists())
 
 
+class ManagerGroupedRoomManagementTests(TestCase):
+    def setUp(self):
+        self.manager = User.objects.create_user(
+            username="grp_mgr", password="test123", role="manager"
+        )
+        self.guest = User.objects.create_user(
+            username="grp_guest", password="test123", role="guest"
+        )
+        self.room_type = RoomType.objects.create(
+            name="Grouped Test Room", description="Test",
+            price_per_night=Decimal("100"), capacity=2,
+        )
+        self.room1 = Room.objects.create(
+            room_number="G01", room_type=self.room_type, floor=1, status="available",
+        )
+        self.room2 = Room.objects.create(
+            room_number="G02", room_type=self.room_type, floor=1, status="maintenance",
+        )
+        self.room3 = Room.objects.create(
+            room_number="G03", room_type=self.room_type, floor=1, status="inactive",
+        )
+        self.client.login(username="grp_mgr", password="test123")
+
+    def test_manager_views_rooms_grouped_by_type(self):
+        response = self.client.get(reverse("hotel:manager_rooms"))
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("type_data", response.context)
+        # Should contain our room type
+        types = response.context["type_data"]
+        self.assertTrue(any(t["room_type"].id == self.room_type.id for t in types))
+
+    def test_room_type_shows_correct_counts(self):
+        response = self.client.get(reverse("hotel:manager_rooms"))
+        types = response.context["type_data"]
+        target = next(t for t in types if t["room_type"].id == self.room_type.id)
+        self.assertEqual(target["total"], 3)
+        self.assertEqual(target["counts"]["available"], 1)
+        self.assertEqual(target["counts"]["maintenance"], 1)
+        self.assertEqual(target["counts"]["inactive"], 1)
+
+    def test_manager_can_change_status_maintenance_to_available(self):
+        response = self.client.post(
+            reverse("hotel:manager_room_change_status", args=[self.room2.id]),
+            {"status": "available"},
+        )
+        self.assertEqual(response.status_code, 302)
+        self.room2.refresh_from_db()
+        self.assertEqual(self.room2.status, "available")
+
+    def test_manager_cannot_set_reserved_room_to_available(self):
+        today = timezone.now().date()
+        RoomReservation.objects.create(
+            guest=self.guest, room_type=self.room_type, room=self.room1,
+            check_in=today - timedelta(days=1),
+            check_out=today + timedelta(days=1),
+            number_of_guests=1, status="confirmed",
+        )
+        self.room1.status = "available"
+        self.room1.save()
+        response = self.client.post(
+            reverse("hotel:manager_room_change_status", args=[self.room1.id]),
+            {"status": "maintenance"},
+        )
+        # Should succeed — can set to maintenance even with active reservation
+        self.assertEqual(response.status_code, 302)
+        self.room1.refresh_from_db()
+        self.assertEqual(self.room1.status, "maintenance")
+
+        # But setting back to available should be blocked
+        response = self.client.post(
+            reverse("hotel:manager_room_change_status", args=[self.room1.id]),
+            {"status": "available"},
+        )
+        self.room1.refresh_from_db()
+        # Should still be maintenance (blocked)
+        self.assertEqual(self.room1.status, "maintenance")
+
+    def test_maintenance_room_excluded_from_auto_assign(self):
+        self.room2.status = "maintenance"
+        self.room2.save()
+        future = timezone.now().date() + timedelta(days=10)
+        available = self.room_type.get_available_rooms(future, future + timedelta(days=2))
+        # G01 is available, G02 is maintenance, G03 is inactive
+        room_numbers = [r.room_number for r in available]
+        self.assertIn("G01", room_numbers)
+        self.assertNotIn("G02", room_numbers)
+        self.assertNotIn("G03", room_numbers)
+
+    def test_non_manager_cannot_access_room_management(self):
+        self.client.logout()
+        staff = User.objects.create_user(
+            username="grp_staff", password="test123", role="staff"
+        )
+        self.client.login(username="grp_staff", password="test123")
+        response = self.client.get(reverse("hotel:manager_rooms"))
+        self.assertNotEqual(response.status_code, 200)
+
+    def test_auto_assignment_still_works_for_available_rooms(self):
+        future = timezone.now().date() + timedelta(days=20)
+        self.client.logout()
+        self.client.login(username="grp_guest", password="test123")
+        session = self.client.session
+        session["reservation_data"] = {
+            "room_type_id": self.room_type.id,
+            "check_in": future.isoformat(),
+            "check_out": (future + timedelta(days=2)).isoformat(),
+            "guests": 1,
+        }
+        session.save()
+        response = self.client.post(reverse("hotel:confirm_reservation"))
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(
+            RoomReservation.objects.filter(
+                guest=self.guest, room_type=self.room_type, status="confirmed"
+            ).exists()
+        )
+
+
 class ManagerAnnouncementCRUDTests(TestCase):
     def setUp(self):
         self.manager = User.objects.create_user(

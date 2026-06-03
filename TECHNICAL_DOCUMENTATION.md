@@ -172,3 +172,43 @@ The session-based approach allows visitors to browse and select without login, t
 - Password validation via Django's built-in validators
 - Session-based authentication
 - No hardcoded secrets in code (using `.env`)
+
+## Grouped Room Management (Manager)
+
+The Room Management page (`/manager/rooms/`) displays rooms grouped by room type using expandable panels — one card per active `RoomType`.
+
+### Room Operational Status vs. Reservation Status
+
+These are two independent concepts:
+
+| Concept | Field | Values | Meaning |
+|---------|-------|--------|---------|
+| **Operational Status** | `Room.status` | `available`, `occupied`, `maintenance`, `inactive` | Physical/operational state of the room |
+| **Reservation Status** | `RoomReservation.status` | `pending`, `confirmed`, `cancelled`, `completed` | Booking state of a reservation |
+
+- A room can have `status = "available"` but still have an active `confirmed` reservation — in that case the UI shows **"Reserved / Currently Booked"** as an overlay badge.
+- The `RoomType.get_available_rooms()` method always checks both: room must be `status = "available"` AND `is_active = True` AND have no overlapping `pending`/`confirmed` reservation.
+
+### Manager Controls
+
+1. **View rooms by type**: Click any room type card header to expand/collapse its rooms table.
+2. **Change room operational status**: Each room row has a status dropdown + submit button.
+3. **Validation on status change**:
+   - Setting status to `available` is **blocked** if the room has an active (current) `pending` or `confirmed` reservation.
+   - Setting to `maintenance` or `inactive` is always allowed (these rooms are excluded from automatic assignment).
+   - Setting from `maintenance` → `available` is allowed only if no active reservation exists.
+
+### Automatic Room Assignment
+
+The auto-assignment logic (called during guest reservation confirmation) remains unchanged:
+
+- Room must have `status = "available"` and `is_active = True`
+- Room must have no overlapping `pending`/`confirmed` reservations for the requested dates
+- Maintenance and inactive rooms are never auto-assigned
+- Manager manual room assignment (via reservation detail) bypasses the status check
+
+### URL: `manager_room_change_status`
+
+- `POST /manager/rooms/<pk>/status/` — change room operational status
+- Accepts `status` POST parameter
+- Returns JSON with `{"success": true}` for AJAX requests, or redirects for normal form posts

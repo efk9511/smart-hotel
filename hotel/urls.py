@@ -55,6 +55,7 @@ urlpatterns = [
     path("manager/rooms/create/", views.manager_room_create, name="manager_room_create"),
     path("manager/rooms/<int:pk>/edit/", views.manager_room_edit, name="manager_room_edit"),
     path("manager/rooms/<int:pk>/delete/", views.manager_room_delete, name="manager_room_delete"),
+    path("manager/rooms/<int:pk>/status/", views.manager_room_change_status, name="manager_room_change_status"),
     path("manager/announcements/", views.manager_announcements, name="manager_announcements"),
     path("manager/announcements/create/", views.manager_announcement_create, name="manager_announcement_create"),
     path("manager/announcements/<int:pk>/edit/", views.manager_announcement_edit, name="manager_announcement_edit"),

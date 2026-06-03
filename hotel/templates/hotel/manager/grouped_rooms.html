@@ -1,0 +1,150 @@
+{% extends "hotel/dashboard_base.html" %}
+{% load hotel_extras %}
+{% block title %}Room Management{% endblock %}
+{% block dashboard_content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="fw-bold mb-0"><i class="bi bi-door-open"></i> Room Management</h1>
+        <a href="{% url 'hotel:manager_room_create' %}" class="btn btn-primary"><i class="bi bi-plus"></i> Add Room</a>
+    </div>
+
+    <div class="row g-3">
+        {% for item in type_data %}
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header d-flex flex-wrap justify-content-between align-items-center py-3"
+                     data-bs-toggle="collapse" data-bs-target="#rooms-{{ item.room_type.id }}"
+                     role="button" aria-expanded="false">
+                    <div class="mb-2 mb-md-0">
+                        <h5 class="mb-0 fw-bold">
+                            <i class="bi bi-building me-1"></i>{{ item.room_type.name }}
+                        </h5>
+                        <small class="text-muted">
+                            <i class="bi bi-currency-dollar"></i> ${{ item.room_type.price_per_night }}/night
+                            &middot; <i class="bi bi-people"></i> Capacity: {{ item.room_type.capacity }}
+                            &middot; <strong>{{ item.total }}</strong> total rooms
+                        </small>
+                    </div>
+                    <div class="d-flex flex-wrap gap-2 align-items-center">
+                        <span class="badge bg-success fs-6">Avail: {{ item.counts.available }}</span>
+                        <span class="badge bg-danger fs-6">Occ: {{ item.counts.occupied }}</span>
+                        <span class="badge bg-warning text-dark fs-6">Maint: {{ item.counts.maintenance }}</span>
+                        <span class="badge bg-secondary fs-6">Inact: {{ item.counts.inactive }}</span>
+                        <i class="bi bi-chevron-down ms-1"></i>
+                    </div>
+                </div>
+                <div class="collapse" id="rooms-{{ item.room_type.id }}">
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0 align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Room</th>
+                                        <th>Floor</th>
+                                        <th>Operational Status</th>
+                                        <th>Reservation</th>
+                                        <th>Guest</th>
+                                        <th>Change Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for room in item.rooms %}
+                                    {% with active_res=active_res_map|dict_key:room.id %}
+                                    <tr>
+                                        <td class="fw-semibold">{{ room.room_number }}</td>
+                                        <td>{{ room.floor }}</td>
+                                        <td>
+                                            {% if active_res %}
+                                                <span class="badge bg-danger">Reserved / Currently Booked</span>
+                                            {% elif room.status == 'available' %}
+                                                <span class="badge bg-success">Available</span>
+                                            {% elif room.status == 'occupied' %}
+                                                <span class="badge bg-danger">Occupied</span>
+                                            {% elif room.status == 'maintenance' %}
+                                                <span class="badge bg-warning text-dark">Maintenance</span>
+                                            {% elif room.status == 'inactive' %}
+                                                <span class="badge bg-secondary">Inactive</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if active_res %}
+                                                <span class="badge bg-info text-dark">{{ active_res.get_status_display }}</span>
+                                                <small class="d-block text-muted mt-1">
+                                                    {{ active_res.check_in|date:"M d" }} → {{ active_res.check_out|date:"M d" }}
+                                                </small>
+                                            {% else %}
+                                                <span class="text-muted">—</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if active_res %}
+                                                <span>{{ active_res.guest.get_full_name|default:active_res.guest.username }}</span>
+                                            {% else %}
+                                                <span class="text-muted">—</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <form method="post" action="{% url 'hotel:manager_room_change_status' room.id %}"
+                                                  class="d-flex gap-1 align-items-center status-form"
+                                                  data-room="{{ room.room_number }}">
+                                                {% csrf_token %}
+                                                <select name="status" class="form-select form-select-sm" style="width: auto; min-width: 110px;">
+                                                    <option value="available" {% if room.status == 'available' %}selected{% endif %}>Available</option>
+                                                    <option value="occupied" {% if room.status == 'occupied' %}selected{% endif %}>Occupied</option>
+                                                    <option value="maintenance" {% if room.status == 'maintenance' %}selected{% endif %}>Maintenance</option>
+                                                    <option value="inactive" {% if room.status == 'inactive' %}selected{% endif %}>Inactive</option>
+                                                </select>
+                                                <button type="submit" class="btn btn-sm btn-outline-primary" title="Update status">
+                                                    <i class="bi bi-check-lg"></i>
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                    {% endwith %}
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="6" class="text-center text-muted py-4">
+                                            <i class="bi bi-door-open"></i> No rooms for this type.
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.status-form').forEach(function(form) {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            var submitBtn = this.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+            var formData = new FormData(this);
+            fetch(this.action, {
+                method: 'POST',
+                body: formData,
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    location.reload();
+                }
+            })
+            .catch(function() { location.reload(); });
+        });
+    });
+});
+</script>
+{% endblock %}
