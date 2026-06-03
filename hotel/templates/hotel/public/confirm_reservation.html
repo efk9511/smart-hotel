@@ -1,0 +1,74 @@
+{% extends "hotel/base.html" %}
+{% block title %}Confirm Reservation{% endblock %}
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <h1 class="fw-bold mb-4"><i class="bi bi-check-circle"></i> Confirm Your Reservation</h1>
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Reservation Summary</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Room Type:</strong>
+                            <p class="fs-5">{{ room_type.name }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Price:</strong>
+                            <p class="fs-5 text-primary fw-bold">${{ room_type.price_per_night }} / night</p>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <strong>Check-in:</strong>
+                            <p>{{ check_in|date:"F d, Y" }}</p>
+                        </div>
+                        <div class="col-md-4">
+                            <strong>Check-out:</strong>
+                            <p>{{ check_out|date:"F d, Y" }}</p>
+                        </div>
+                        <div class="col-md-4">
+                            <strong>Guests:</strong>
+                            <p>{{ guests }}</p>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <strong>Nights:</strong>
+                            <p>{{ nights }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Total Price:</strong>
+                            <p class="fs-3 fw-bold text-primary">${{ total_price }}</p>
+                        </div>
+                    </div>
+                    {% if available_rooms_count > 0 %}
+                    <div class="alert alert-success">
+                        <i class="bi bi-check-circle"></i> <strong>{{ available_rooms_count }}</strong> room(s) available for your selected dates.
+                    </div>
+                    {% else %}
+                    <div class="alert alert-danger">
+                        <i class="bi bi-exclamation-triangle"></i> No rooms available for the selected dates.
+                    </div>
+                    {% endif %}
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i> This is a demo reservation. No real payment will be processed.
+                    </div>
+                    <form method="post">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-success btn-lg w-100">
+                            <i class="bi bi-check-lg"></i> Confirm & Complete Reservation
+                        </button>
+                        <a href="{% url 'hotel:start_reservation' %}" class="btn btn-outline-secondary btn-lg w-100 mt-2">
+                            <i class="bi bi-arrow-left"></i> Cancel & Go Back
+                        </a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

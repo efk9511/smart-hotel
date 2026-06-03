@@ -1,0 +1,47 @@
+{% extends "hotel/base.html" %}
+{% block title %}Print Reservation{% endblock %}
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card shadow-sm" id="print-area">
+                <div class="card-header bg-primary text-white text-center">
+                    <h3 class="mb-0">Seaside Hotel - Reservation Confirmation</h3>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <h4>Reservation #{{ reservation.id }}</h4>
+                        <span class="badge {% if reservation.status == 'confirmed' %}bg-success{% elif reservation.status == 'pending' %}bg-warning{% else %}bg-secondary{% endif %} fs-6">
+                            {{ reservation.get_status_display }}
+                        </span>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-6"><strong>Guest:</strong> {{ reservation.guest.get_full_name|default:reservation.guest.username }}</div>
+                        <div class="col-6"><strong>Email:</strong> {{ reservation.guest.email }}</div>
+                    </div>
+                    <hr>
+                    <div class="row mb-3">
+                        <div class="col-md-4"><strong>Room Type:</strong><br>{{ reservation.room_type.name }}</div>
+                        <div class="col-md-4"><strong>Check-in:</strong><br>{{ reservation.check_in|date:"F d, Y" }}</div>
+                        <div class="col-md-4"><strong>Check-out:</strong><br>{{ reservation.check_out|date:"F d, Y" }}</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-4"><strong>Nights:</strong><br>{{ reservation.nights }}</div>
+                        <div class="col-md-4"><strong>Guests:</strong><br>{{ reservation.number_of_guests }}</div>
+                        <div class="col-md-4"><strong>Room:</strong><br>{% if reservation.room %}{{ reservation.room.room_number }} (Floor {{ reservation.room.floor }}){% else %}Not assigned{% endif %}</div>
+                    </div>
+                    <hr>
+                    <div class="text-center">
+                        <h3 class="text-primary">Total: ${{ reservation.total_price }}</h3>
+                    </div>
+                    <p class="text-muted text-center mt-3"><small>Created: {{ reservation.created_at|date:"F d, Y H:i" }}</small></p>
+                </div>
+            </div>
+            <div class="text-center mt-3">
+                <button onclick="window.print()" class="btn btn-primary"><i class="bi bi-printer"></i> Print</button>
+                <a href="{% url 'hotel:my_room_reservations' %}" class="btn btn-outline-secondary">Back to Reservations</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

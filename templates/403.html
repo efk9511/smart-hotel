@@ -1,0 +1,14 @@
+{% extends "hotel/base.html" %}
+{% block title %}Access Denied{% endblock %}
+{% block content %}
+<div class="error-page">
+    <div>
+        <div class="error-code">403</div>
+        <h2 class="fw-bold mt-3">Access Denied</h2>
+        <p class="text-muted mb-4">You do not have permission to access this page.</p>
+        <a href="{% url 'hotel:home' %}" class="btn btn-primary btn-lg">
+            <i class="bi bi-house-door"></i> Return Home
+        </a>
+    </div>
+</div>
+{% endblock %}

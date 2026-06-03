@@ -1,0 +1,70 @@
+{% extends "hotel/dashboard_base.html" %}
+{% block title %}User Management{% endblock %}
+{% block dashboard_content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="fw-bold mb-0"><i class="bi bi-people"></i> User Management</h1>
+        <a href="{% url 'hotel:manager_user_create' %}" class="btn btn-primary"><i class="bi bi-plus"></i> Add User</a>
+    </div>
+
+    <div class="card shadow-sm mb-3">
+        <div class="card-body">
+            <form method="get" class="row g-2">
+                <div class="col-md-4">
+                    <input type="text" name="q" class="form-control" placeholder="Search users..." value="{{ search_query|default:'' }}">
+                </div>
+                <div class="col-md-3">
+                    <select name="role" class="form-select">
+                        <option value="">All Roles</option>
+                        <option value="guest" {% if role_filter == 'guest' %}selected{% endif %}>Guest</option>
+                        <option value="staff" {% if role_filter == 'staff' %}selected{% endif %}>Staff</option>
+                        <option value="manager" {% if role_filter == 'manager' %}selected{% endif %}>Manager</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100"><i class="bi bi-search"></i> Filter</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Phone</th>
+                        <th>Active</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in users %}
+                    <tr>
+                        <td>{{ u.username }}</td>
+                        <td>{{ u.get_full_name|default:"-" }}</td>
+                        <td>{{ u.email|default:"-" }}</td>
+                        <td><span class="badge {% if u.role == 'manager' %}bg-danger{% elif u.role == 'staff' %}bg-info text-dark{% else %}bg-success{% endif %}">{{ u.get_role_display }}</span></td>
+                        <td>{{ u.phone_number|default:"-" }}</td>
+                        <td>{% if u.is_active %}<i class="bi bi-check-circle text-success"></i>{% else %}<i class="bi bi-x-circle text-danger"></i>{% endif %}</td>
+                        <td>
+                            <a href="{% url 'hotel:manager_user_edit' u.id %}" class="btn btn-sm btn-outline-primary" title="Edit"><i class="bi bi-pencil"></i></a>
+                            <a href="{% url 'hotel:manager_user_delete' u.id %}" class="btn btn-sm btn-outline-danger" title="Delete" data-delete-url="{% url 'hotel:manager_user_delete' u.id %}" data-item-name="{{ u.get_full_name|default:u.username }}"><i class="bi bi-trash"></i></a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="7" class="text-center text-muted py-4">No users found.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% if users.paginator.num_pages > 1 %}
+    <nav class="mt-3">{% include "hotel/partials/pagination.html" with page_obj=users %}</nav>
+    {% endif %}
+</div>
+{% endblock %}

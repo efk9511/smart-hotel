@@ -1,0 +1,139 @@
+{% extends "hotel/dashboard_base.html" %}
+{% load humanize %}
+{% block title %}Manager Dashboard{% endblock %}
+{% block dashboard_content %}
+<div class="container-fluid py-4">
+    <h1 class="fw-bold mb-4"><i class="bi bi-speedometer2"></i> Manager Dashboard</h1>
+    <p class="text-muted">Welcome, {{ user.first_name|default:user.username }}!</p>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-3 col-6">
+            <div class="card border-primary h-100">
+                <div class="card-body text-center">
+                    <i class="bi bi-people text-primary" style="font-size: 2rem;"></i>
+                    <h3 class="mt-2">{{ total_guests }}</h3>
+                    <p class="text-muted mb-0">Total Guests</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="card border-info h-100">
+                <div class="card-body text-center">
+                    <i class="bi bi-person-badge text-info" style="font-size: 2rem;"></i>
+                    <h3 class="mt-2">{{ total_staff }}</h3>
+                    <p class="text-muted mb-0">Total Staff</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="card border-success h-100">
+                <div class="card-body text-center">
+                    <i class="bi bi-building text-success" style="font-size: 2rem;"></i>
+                    <h3 class="mt-2">{{ total_rooms }}</h3>
+                    <p class="text-muted mb-0">Total Rooms</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="card border-warning h-100">
+                <div class="card-body text-center">
+                    <i class="bi bi-door-open text-warning" style="font-size: 2rem;"></i>
+                    <h3 class="mt-2">{{ available_rooms }}</h3>
+                    <p class="text-muted mb-0">Available Rooms</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="card border-primary h-100">
+                <div class="card-body text-center">
+                    <i class="bi bi-calendar-check text-primary" style="font-size: 2rem;"></i>
+                    <h3 class="mt-2">{{ active_reservations }}</h3>
+                    <p class="text-muted mb-0">Active Reservations</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="card border-danger h-100">
+                <div class="card-body text-center">
+                    <i class="bi bi-exclamation-triangle text-danger" style="font-size: 2rem;"></i>
+                    <h3 class="mt-2">{{ open_tickets }}</h3>
+                    <p class="text-muted mb-0">Open Tickets</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="card border-success h-100">
+                <div class="card-body text-center">
+                    <i class="bi bi-check-circle text-success" style="font-size: 2rem;"></i>
+                    <h3 class="mt-2">{{ resolved_tickets }}</h3>
+                    <p class="text-muted mb-0">Resolved Tickets</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="card border-info h-100">
+                <div class="card-body text-center">
+                    <i class="bi bi-currency-dollar text-info" style="font-size: 2rem;"></i>
+                    <h3 class="mt-2">${{ total_revenue|floatformat:0|intcomma }}</h3>
+                    <p class="text-muted mb-0">Total Revenue</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-md-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header d-flex justify-content-between">
+                    <h5 class="mb-0"><i class="bi bi-calendar3"></i> Recent Reservations</h5>
+                    <a href="{% url 'hotel:manager_reservations' %}" class="btn btn-sm btn-primary">View All</a>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-hover mb-0">
+                        <thead><tr><th>#</th><th>Guest</th><th>Room Type</th><th>Dates</th><th>Status</th></tr></thead>
+                        <tbody>
+                            {% for res in recent_reservations %}
+                            <tr>
+                                <td>{{ res.id }}</td>
+                                <td>{{ res.guest.username }}</td>
+                                <td>{{ res.room_type.name|default:"-" }}</td>
+                                <td><small>{{ res.check_in|date:"M d" }} - {{ res.check_out|date:"M d" }}</small></td>
+                                <td>{% include "hotel/partials/reservation_status.html" with status=res.status %}</td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="5" class="text-center text-muted">No reservations</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header d-flex justify-content-between">
+                    <h5 class="mb-0"><i class="bi bi-ticket"></i> Recent Tickets</h5>
+                    <a href="{% url 'hotel:manager_tickets' %}" class="btn btn-sm btn-primary">View All</a>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-hover mb-0">
+                        <thead><tr><th>#</th><th>Title</th><th>Guest</th><th>Priority</th><th>Status</th></tr></thead>
+                        <tbody>
+                            {% for ticket in recent_tickets %}
+                            <tr>
+                                <td>{{ ticket.id }}</td>
+                                <td>{{ ticket.title|truncatewords:5 }}</td>
+                                <td>{{ ticket.guest.username }}</td>
+                                <td>{% include "hotel/partials/priority_badge.html" with priority=ticket.priority %}</td>
+                                <td>{% include "hotel/partials/status_badge.html" with status=ticket.status %}</td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="5" class="text-center text-muted">No tickets</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

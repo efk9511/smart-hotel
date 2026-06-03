@@ -1,0 +1,55 @@
+{% extends "hotel/dashboard_base.html" %}
+{% block title %}My Reservations{% endblock %}
+{% block dashboard_content %}
+    <h1 class="fw-bold mb-4"><i class="bi bi-calendar3"></i> My Room Reservations</h1>
+    <a href="{% url 'hotel:start_reservation' %}" class="btn btn-primary mb-3"><i class="bi bi-plus"></i> New Reservation</a>
+    {% if reservations %}
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Room Type</th>
+                    <th>Check-in</th>
+                    <th>Check-out</th>
+                    <th>Guests</th>
+                    <th>Total</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for res in reservations %}
+                <tr>
+                    <td>{{ res.id }}</td>
+                    <td>{{ res.room_type.name }}{% if res.room %}<br><small class="text-muted">Room {{ res.room.room_number }}</small>{% endif %}</td>
+                    <td>{{ res.check_in|date:"M d, Y" }}</td>
+                    <td>{{ res.check_out|date:"M d, Y" }}</td>
+                    <td>{{ res.number_of_guests }}</td>
+                    <td>${{ res.total_price }}</td>
+                    <td>{% include "hotel/partials/reservation_status.html" with status=res.status %}</td>
+                    <td>
+                        <a href="{% url 'hotel:my_room_reservation_detail' res.id %}" class="btn btn-sm btn-outline-primary">View</a>
+                        {% if res.id in cancelable_ids %}
+                        <button type="button" class="btn btn-sm btn-outline-warning" data-bs-toggle="modal" data-bs-target="#confirmCancelModal"
+                            data-cancel-url="{% url 'hotel:cancel_reservation' res.id %}"
+                            data-cancel-message="Cancel reservation #{{ res.id }} ({{ res.room_type.name }})?">
+                            <i class="bi bi-x-circle"></i>
+                        </button>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% if reservations.paginator.num_pages > 1 %}
+    <nav>{% include "hotel/partials/pagination.html" with page_obj=reservations %}</nav>
+    {% endif %}
+    {% else %}
+    <div class="text-center py-5">
+        <i class="bi bi-calendar-x" style="font-size: 3rem;"></i>
+        <p class="text-muted mt-2">No reservations found.</p>
+    </div>
+    {% endif %}
+{% endblock %}

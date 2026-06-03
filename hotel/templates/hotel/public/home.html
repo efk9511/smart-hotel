@@ -1,0 +1,119 @@
+{% extends "hotel/base.html" %}
+{% load static %}
+{% block title %}Seaside Hotel - Home{% endblock %}
+{% block content %}
+<div class="hero-section text-center py-5 mb-4 hero-wave">
+    <div class="container">
+        <i class="bi bi-water fs-1 mb-3 d-block"></i>
+        <h1 class="display-4 fw-bold">Welcome to Seaside Hotel</h1>
+        <p class="lead">Experience coastal luxury where the sea meets intelligent hospitality.</p>
+        <a href="{% url 'hotel:start_reservation' %}" class="btn btn-primary btn-lg mt-3">
+            <i class="bi bi-calendar-check"></i> Book Your Stay Now
+        </a>
+        <a href="{% url 'hotel:room_type_list' %}" class="btn btn-outline-secondary btn-lg mt-3 ms-2">
+            <i class="bi bi-house-door"></i> View Rooms
+        </a>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="fw-bold">Our Room Types</h2>
+            <p class="text-muted">Choose from our selection of sea-view accommodations.</p>
+        </div>
+    </div>
+    <div class="row g-4">
+        {% for room in room_types %}
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 shadow-sm">
+                {% if room.static_image %}
+                    <img src="{% static room.static_image %}" class="card-img-top" alt="{{ room.name }}" style="height: 200px; object-fit: cover;" onerror="this.onerror=null;this.src='{% static 'images/rooms/default_room.png' %}'">
+                {% elif room.image %}
+                    <img src="{{ room.image.url }}" class="card-img-top" alt="{{ room.name }}" style="height: 200px; object-fit: cover;">
+                {% else %}
+                    {% if "City" in room.name %}
+                    <div class="card-img-top room-img-placeholder city-view" style="height: 200px;">
+                    {% elif "Presidential" in room.name %}
+                    <div class="card-img-top room-img-placeholder presidential-view" style="height: 200px;">
+                    {% elif "Executive" in room.name %}
+                    <div class="card-img-top room-img-placeholder executive-view" style="height: 200px;">
+                    {% elif "Family" in room.name %}
+                    <div class="card-img-top room-img-placeholder family-view" style="height: 200px;">
+                    {% else %}
+                    <div class="card-img-top room-img-placeholder sea-view" style="height: 200px;">
+                    {% endif %}
+                        <i class="bi bi-building" style="font-size: 4rem;"></i>
+                    </div>
+                {% endif %}
+                <div class="card-body">
+                    <h5 class="card-title">{{ room.name }}</h5>
+                    <p class="card-text text-muted">{{ room.description|truncatewords:20 }}</p>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="fw-bold text-primary">${{ room.price_per_night }}<small class="text-muted">/night</small></span>
+                        <span class="badge bg-info"><i class="bi bi-people"></i> {{ room.capacity }} guests</span>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <a href="{% url 'hotel:room_type_detail' room.id %}" class="btn btn-outline-primary w-100">View Details</a>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12 text-center py-5">
+            <i class="bi bi-building-x" style="font-size: 3rem;"></i>
+            <p class="text-muted mt-2">No rooms available at the moment.</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% if announcements %}
+    <div class="row mt-5">
+        <div class="col-12">
+            <h2 class="fw-bold mb-3">Announcements</h2>
+        </div>
+        {% for ann in announcements %}
+        <div class="col-md-6 col-lg-4 mb-3">
+            <div class="card announcement-card">
+                <div class="card-body">
+                    <h5 class="card-title">{{ ann.title }}</h5>
+                    <p class="card-text">{{ ann.content|truncatewords:30 }}</p>
+                    <small class="text-muted">{{ ann.created_at|date:"M d, Y" }}</small>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="row mt-5 mb-5">
+        <div class="col-md-4 text-center mb-3">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body py-4">
+                    <i class="bi bi-water seaside-icon" style="font-size: 2.5rem;"></i>
+                    <h5 class="mt-2">Sea View Stays</h5>
+                    <p class="text-muted">Every room offers breathtaking coastal views.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 text-center mb-3">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body py-4">
+                    <i class="bi bi-ticket-perforated seaside-icon" style="font-size: 2.5rem;"></i>
+                    <h5 class="mt-2">24/7 Concierge</h5>
+                    <p class="text-muted">Submit requests anytime via our smart ticket system.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 text-center mb-3">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body py-4">
+                    <i class="bi bi-sun seaside-icon" style="font-size: 2.5rem;"></i>
+                    <h5 class="mt-2">Premium Amenities</h5>
+                    <p class="text-muted">Rooftop lounge, infinity pool, spa, and more.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

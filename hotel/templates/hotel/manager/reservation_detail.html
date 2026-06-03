@@ -1,0 +1,88 @@
+{% extends "hotel/dashboard_base.html" %}
+{% block title %}Reservation #{{ reservation.id }}{% endblock %}
+{% block dashboard_content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'hotel:manager_dashboard' %}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'hotel:manager_reservations' %}">Reservations</a></li>
+                    <li class="breadcrumb-item active">Reservation #{{ reservation.id }}</li>
+                </ol>
+            </nav>
+            <div class="card shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">Reservation #{{ reservation.id }}</h4>
+                    {% include "hotel/partials/reservation_status.html" with status=reservation.status %}
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6"><strong>Guest:</strong> {{ reservation.guest.get_full_name|default:reservation.guest.username }}</div>
+                        <div class="col-md-6"><strong>Email:</strong> {{ reservation.guest.email }}</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-4"><strong>Room Type:</strong> {{ reservation.room_type.name|default:"-" }}</div>
+                        <div class="col-md-4"><strong>Room:</strong> {{ reservation.room.room_number|default:"Not assigned" }}</div>
+                        <div class="col-md-4"><strong>Guests:</strong> {{ reservation.number_of_guests }}</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-4"><strong>Check-in:</strong> {{ reservation.check_in|date:"F d, Y" }}</div>
+                        <div class="col-md-4"><strong>Check-out:</strong> {{ reservation.check_out|date:"F d, Y" }}</div>
+                        <div class="col-md-4"><strong>Nights:</strong> {{ reservation.nights }}</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6"><strong>Total Price:</strong> <span class="text-primary fw-bold fs-5">${{ reservation.total_price }}</span></div>
+                        <div class="col-md-6"><strong>Created:</strong> {{ reservation.created_at|date:"F d, Y H:i" }}</div>
+                    </div>
+                    <hr>
+
+                    {% if reservation.room_type %}
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <form method="post" action="{% url 'hotel:manager_assign_room' reservation.id %}">
+                                {% csrf_token %}
+                                <div class="row g-2 align-items-center">
+                                    <div class="col-auto"><strong>Assign Room:</strong></div>
+                                    <div class="col">
+                                        <select name="room" class="form-select">
+                                            <option value="">--- No room assigned ---</option>
+                                            {% for room in available_rooms %}
+                                            <option value="{{ room.id }}" {% if reservation.room and reservation.room.id == room.id %}selected{% endif %}>
+                                                {{ room.room_number }} (Floor {{ room.floor }})
+                                            </option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="col-auto">
+                                        <button type="submit" class="btn btn-primary"><i class="bi bi-door-open"></i> Assign</button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="col-md-6">
+                            <form method="post" action="{% url 'hotel:manager_update_reservation_status' reservation.id %}">
+                                {% csrf_token %}
+                                <div class="row g-2 align-items-center">
+                                    <div class="col-auto"><strong>Change Status:</strong></div>
+                                    <div class="col">
+                                        <select name="status" class="form-select">
+                                            {% for key, label in reservation.Status.choices %}
+                                            <option value="{{ key }}" {% if reservation.status == key %}selected{% endif %}>{{ label }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="col-auto">
+                                        <button type="submit" class="btn btn-primary">Update</button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

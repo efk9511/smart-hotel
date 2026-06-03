@@ -1,0 +1,61 @@
+{% extends "hotel/dashboard_base.html" %}
+{% block title %}Reservation #{{ reservation.id }}{% endblock %}
+{% block dashboard_content %}
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'hotel:guest_dashboard' %}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'hotel:my_room_reservations' %}">Reservations</a></li>
+                    <li class="breadcrumb-item active">Reservation #{{ reservation.id }}</li>
+                </ol>
+            </nav>
+            <div class="card shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">Reservation #{{ reservation.id }}</h4>
+                    {% include "hotel/partials/reservation_status.html" with status=reservation.status %}
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6"><strong>Room Type:</strong> {{ reservation.room_type.name }}</div>
+                        <div class="col-md-6">
+                            <strong>Room Number:</strong>
+                            {% if reservation.room %}
+                                {{ reservation.room.room_number }}
+                                <small class="text-muted">(Floor {{ reservation.room.floor }})</small>
+                            {% else %}
+                                <span class="text-muted">Room will be assigned soon.</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-4"><strong>Check-in:</strong> {{ reservation.check_in|date:"F d, Y" }}</div>
+                        <div class="col-md-4"><strong>Check-out:</strong> {{ reservation.check_out|date:"F d, Y" }}</div>
+                        <div class="col-md-4"><strong>Guests:</strong> {{ reservation.number_of_guests }}</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-4"><strong>Nights:</strong> {{ reservation.nights }}</div>
+                        <div class="col-md-4"><strong>Total Price:</strong> <span class="text-primary fw-bold">${{ reservation.total_price }}</span></div>
+                        <div class="col-md-4"><strong>Created:</strong> {{ reservation.created_at|date:"M d, Y H:i" }}</div>
+                    </div>
+                    <hr>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <a href="{% url 'hotel:print_reservation' reservation.id %}" class="btn btn-outline-primary">
+                            <i class="bi bi-printer"></i> Print
+                        </a>
+                        <a href="{% url 'hotel:start_reservation' %}" class="btn btn-primary">
+                            <i class="bi bi-plus"></i> New Reservation
+                        </a>
+                        {% if can_cancel %}
+                        <button type="button" class="btn btn-outline-warning" data-bs-toggle="modal" data-bs-target="#confirmCancelModal"
+                            data-cancel-url="{% url 'hotel:cancel_reservation' reservation.id %}"
+                            data-cancel-message="Cancel reservation #{{ reservation.id }} ({{ reservation.room_type.name }})? Check-in is in {{ days_until_checkin }} day(s).">
+                            <i class="bi bi-x-circle"></i> Cancel Reservation
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

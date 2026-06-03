@@ -1,0 +1,92 @@
+{% extends "hotel/base.html" %}
+{% load static %}
+{% block title %}Hotel Offers & Activities{% endblock %}
+{% block extra_css %}
+<style>
+.offer-card-img {
+    width: 100%;
+    height: 230px;
+    object-fit: cover;
+    display: block;
+}
+</style>
+{% endblock %}
+{% block content %}
+<div class="hero-section text-center py-5 mb-4">
+    <div class="container">
+        <i class="bi bi-gift fs-1 mb-3 d-block"></i>
+        <h1 class="display-4 fw-bold">Hotel Offers & Activities</h1>
+        <p class="lead">Discover exceptional experiences during your seaside stay.</p>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <form method="get" class="row g-2">
+                <div class="col-auto">
+                    <select name="type" class="form-select" onchange="this.form.submit()">
+                        <option value="">All Activities</option>
+                        {% for key, label in offer_type_choices %}
+                        <option value="{{ key }}" {% if current_type == key %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% if current_type %}
+                <div class="col-auto">
+                    <a href="{% url 'hotel:offers_list' %}" class="btn btn-outline-secondary">Clear Filter</a>
+                </div>
+                {% endif %}
+            </form>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        {% for offer in offers %}
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 shadow-sm">
+                {% if offer.static_image %}
+                    <img src="{% static offer.static_image %}" alt="{{ offer.title }}" class="offer-card-img" onerror="this.onerror=null;this.src='{% static 'images/offers/default_offer.png' %}'">
+                {% else %}
+                    <img src="{% static 'images/offers/default_offer.png' %}" alt="{{ offer.title }}" class="offer-card-img">
+                {% endif %}
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h5 class="card-title mb-0">{{ offer.title }}</h5>
+                        <span class="badge bg-info">{{ offer.get_offer_type_display }}</span>
+                    </div>
+                    <p class="card-text text-muted">{{ offer.description|truncatewords:25 }}</p>
+                    {% if offer.common_area %}
+                        <p class="mb-1"><i class="bi bi-geo-alt seaside-icon"></i> {{ offer.common_area.location|default:offer.common_area.name }}</p>
+                    {% endif %}
+                    {% if offer.start_time and offer.end_time %}
+                        <p class="mb-1"><i class="bi bi-clock seaside-icon"></i> {{ offer.start_time|time:"H:i" }} - {{ offer.end_time|time:"H:i" }}</p>
+                    {% endif %}
+                    {% if offer.is_free_for_guests %}
+                        <p class="mb-1"><span class="badge bg-success">Free for Guests</span></p>
+                    {% elif offer.price %}
+                        <p class="mb-1 fw-bold text-primary">${{ offer.price }}</p>
+                    {% endif %}
+                </div>
+                <div class="card-footer bg-transparent">
+                    {% if offer.common_area %}
+                        <a href="{% url 'hotel:create_common_reservation' %}" class="btn btn-primary w-100">
+                            <i class="bi bi-calendar-plus"></i> Reserve Now
+                        </a>
+                    {% else %}
+                        <button class="btn btn-outline-primary w-100" disabled>
+                            <i class="bi bi-info-circle"></i> Learn More
+                        </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12 text-center py-5">
+            <i class="bi bi-gift" style="font-size: 3rem;"></i>
+            <p class="text-muted mt-2">No offers available at the moment.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

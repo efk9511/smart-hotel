@@ -1,0 +1,106 @@
+{% extends "hotel/dashboard_base.html" %}
+{% block title %}Ticket #{{ ticket.id }}{% endblock %}
+{% block dashboard_content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-lg-10 mx-auto">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'hotel:manager_dashboard' %}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'hotel:manager_tickets' %}">Tickets</a></li>
+                    <li class="breadcrumb-item active">Ticket #{{ ticket.id }}</li>
+                </ol>
+            </nav>
+
+            <div class="card shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">{{ ticket.title }}</h4>
+                    <div>{% include "hotel/partials/ticket_badges.html" %}</div>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-3"><strong>Guest:</strong> {{ ticket.guest.get_full_name|default:ticket.guest.username }}</div>
+                        <div class="col-md-3"><strong>Category:</strong> {{ ticket.get_category_display }}</div>
+                        <div class="col-md-3"><strong>Room:</strong> {{ ticket.room.room_number|default:"N/A" }}</div>
+                        <div class="col-md-3"><strong>Assigned:</strong> {{ ticket.assigned_staff.username|default:"<span class='text-danger'>Unassigned</span>" }}</div>
+                    </div>
+                    <p><strong>Description:</strong></p>
+                    <p>{{ ticket.description|linebreaks }}</p>
+                    <p><small class="text-muted">Created: {{ ticket.created_at|date:"F d, Y H:i" }} | Updated: {{ ticket.updated_at|date:"F d, Y H:i" }}</small></p>
+                </div>
+            </div>
+
+            <div class="row g-3 mt-2">
+                <div class="col-md-6">
+                    <div class="card shadow-sm">
+                        <div class="card-header"><h5 class="mb-0">Assign / Update</h5></div>
+                        <div class="card-body">
+                            <form method="post" action="{% url 'hotel:manager_assign_ticket' ticket.id %}">
+                                {% csrf_token %}
+                                {% for field in assign_form %}
+                                <div class="mb-3">
+                                    <label class="form-label">{{ field.label }}</label>
+                                    {{ field }}
+                                </div>
+                                {% endfor %}
+                                <button type="submit" class="btn btn-primary w-100">Save</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card shadow-sm">
+                        <div class="card-header"><h5 class="mb-0">Change Status</h5></div>
+                        <div class="card-body">
+                            <form method="post" action="{% url 'hotel:manager_update_ticket_status' ticket.id %}" class="ajax-status-form">
+                                {% csrf_token %}
+                                <div class="mb-3">
+                                    <select name="status" class="form-select">
+                                        {% for key, label in ticket.Status.choices %}
+                                        <option value="{{ key }}" {% if ticket.status == key %}selected{% endif %}>{{ label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100"><i class="bi bi-arrow-up-circle"></i> Update Status</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {% if notes %}
+            <div class="card shadow-sm mt-3">
+                <div class="card-header"><h5 class="mb-0">Notes & Updates</h5></div>
+                <div class="card-body" id="notes-list">
+                    {% for note in notes %}
+                    <div class="mb-3 pb-2 border-bottom">
+                        <strong>{{ note.user.get_full_name|default:note.user.username }}</strong>
+                        <small class="text-muted ms-2">{{ note.created_at|date:"M d, Y H:i" }}</small>
+                        <p class="mb-0 mt-1">{{ note.note|linebreaks }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+document.querySelectorAll('select, textarea').forEach(el => el.classList.add('form-control'));
+document.querySelectorAll('.ajax-status-form').forEach(form => {
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        fetch(this.action, {
+            method: 'POST',
+            headers: {'X-Requested-With': 'XMLHttpRequest'},
+            body: formData
+        }).then(r => r.json()).then(data => {
+            if (data.success) location.reload();
+        }).catch(() => location.reload());
+    });
+});
+</script>
+{% endblock %}

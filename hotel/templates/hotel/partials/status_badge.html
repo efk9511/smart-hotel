@@ -1,0 +1,3 @@
+<span class="badge {% if status == 'open' %}bg-danger{% elif status == 'assigned' %}bg-primary{% elif status == 'in_progress' %}bg-warning text-dark{% elif status == 'resolved' %}bg-success{% elif status == 'closed' %}bg-secondary{% elif status == 'confirmed' %}bg-success{% elif status == 'pending' %}bg-warning text-dark{% elif status == 'cancelled' %}bg-danger{% elif status == 'completed' %}bg-info text-dark{% else %}bg-secondary{% endif %}">
+    {{ status|title }}
+</span>

@@ -1,0 +1,168 @@
+{% extends "hotel/base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <aside class="col-md-3 col-lg-2 d-md-block sidebar bg-body-tertiary border-end collapse d-md-block" id="sidebarNav">
+            <div class="sidebar-sticky pt-3">
+                <ul class="nav flex-column">
+                    {% if user.is_guest %}
+                        <li class="nav-item">
+                            <a class="nav-link{% if request.resolver_match.view_name == 'hotel:guest_dashboard' %} active fw-semibold{% endif %}" href="{% url 'hotel:guest_dashboard' %}">
+                                <i class="bi bi-speedometer2 me-2"></i>Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link{% if request.resolver_match.view_name == 'hotel:start_reservation' %} active fw-semibold{% endif %}" href="{% url 'hotel:start_reservation' %}">
+                                <i class="bi bi-calendar-plus me-2"></i>Book a Room
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link{% if request.resolver_match.view_name == 'hotel:my_room_reservations' %} active fw-semibold{% endif %}" href="{% url 'hotel:my_room_reservations' %}">
+                                <i class="bi bi-card-list me-2"></i>My Reservations
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link{% if request.resolver_match.view_name == 'hotel:create_common_reservation' %} active fw-semibold{% endif %}" href="{% url 'hotel:create_common_reservation' %}">
+                                <i class="bi bi-building-add me-2"></i>Reserve Common Area
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link{% if request.resolver_match.view_name == 'hotel:my_common_reservations' %} active fw-semibold{% endif %}" href="{% url 'hotel:my_common_reservations' %}">
+                                <i class="bi bi-grid me-2"></i>My Area Reservations
+                            </a>
+                        </li>
+                        <li class="nav-item mt-2"><hr class="sidebar-divider"></li>
+                        <li class="nav-item">
+                            <a class="nav-link{% if request.resolver_match.view_name == 'hotel:create_ticket' %} active fw-semibold{% endif %}" href="{% url 'hotel:create_ticket' %}">
+                                <i class="bi bi-plus-circle me-2"></i>Create Ticket
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link{% if request.resolver_match.view_name == 'hotel:my_tickets' %} active fw-semibold{% endif %}" href="{% url 'hotel:my_tickets' %}">
+                                <i class="bi bi-ticket me-2"></i>My Tickets
+                            </a>
+                        </li>
+                        <li class="nav-item mt-2"><hr class="sidebar-divider"></li>
+                        <li class="nav-item">
+                            <a class="nav-link{% if request.resolver_match.view_name == 'hotel:offers_list' %} active fw-semibold{% endif %}" href="{% url 'hotel:offers_list' %}">
+                                <i class="bi bi-gift me-2"></i>Offers & Activities
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link{% if request.resolver_match.view_name == 'hotel:guest_profile' %} active fw-semibold{% endif %}" href="{% url 'hotel:guest_profile' %}">
+                                <i class="bi bi-person me-2"></i>Profile
+                            </a>
+                        </li>
+                    {% endif %}
+
+                    {% if user.role == 'staff' %}
+                        <li class="nav-item">
+                            <a class="nav-link{% if request.resolver_match.view_name == 'hotel:staff_dashboard' %} active fw-semibold{% endif %}" href="{% url 'hotel:staff_dashboard' %}">
+                                <i class="bi bi-speedometer2 me-2"></i>Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link{% if request.resolver_match.view_name == 'hotel:staff_tickets' %} active fw-semibold{% endif %}" href="{% url 'hotel:staff_tickets' %}">
+                                <i class="bi bi-ticket me-2"></i>Tickets
+                            </a>
+                        </li>
+                    {% endif %}
+
+                    {% if user.is_manager %}
+                        <li class="nav-item">
+                            <a class="nav-link{% if request.resolver_match.view_name == 'hotel:manager_dashboard' %} active fw-semibold{% endif %}" href="{% url 'hotel:manager_dashboard' %}">
+                                <i class="bi bi-speedometer2 me-2"></i>Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item mt-2"><small class="text-muted px-3 text-uppercase">Management</small></li>
+                        <li class="nav-item">
+                            <a class="nav-link{% if request.resolver_match.view_name == 'hotel:manager_users' %} active fw-semibold{% endif %}" href="{% url 'hotel:manager_users' %}">
+                                <i class="bi bi-people me-2"></i>Users
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link{% if request.resolver_match.view_name == 'hotel:manager_room_types' %} active fw-semibold{% endif %}" href="{% url 'hotel:manager_room_types' %}">
+                                <i class="bi bi-columns-gap me-2"></i>Room Types
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link{% if request.resolver_match.view_name == 'hotel:manager_rooms' %} active fw-semibold{% endif %}" href="{% url 'hotel:manager_rooms' %}">
+                                <i class="bi bi-door-open me-2"></i>Rooms
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link{% if request.resolver_match.view_name == 'hotel:manager_announcements' %} active fw-semibold{% endif %}" href="{% url 'hotel:manager_announcements' %}">
+                                <i class="bi bi-megaphone me-2"></i>Announcements
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link{% if request.resolver_match.view_name == 'hotel:manager_offers' %} active fw-semibold{% endif %}" href="{% url 'hotel:manager_offers' %}">
+                                <i class="bi bi-gift me-2"></i>Offers
+                            </a>
+                        </li>
+                        <li class="nav-item mt-2"><small class="text-muted px-3 text-uppercase">Reservations</small></li>
+                        <li class="nav-item">
+                            <a class="nav-link{% if request.resolver_match.view_name == 'hotel:manager_reservations' %} active fw-semibold{% endif %}" href="{% url 'hotel:manager_reservations' %}">
+                                <i class="bi bi-calendar-check me-2"></i>Room Reservations
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link{% if request.resolver_match.view_name == 'hotel:manager_common_reservations' %} active fw-semibold{% endif %}" href="{% url 'hotel:manager_common_reservations' %}">
+                                <i class="bi bi-grid me-2"></i>Common Area
+                            </a>
+                        </li>
+                        <li class="nav-item mt-2"><small class="text-muted px-3 text-uppercase">Support</small></li>
+                        <li class="nav-item">
+                            <a class="nav-link{% if request.resolver_match.view_name == 'hotel:manager_tickets' %} active fw-semibold{% endif %}" href="{% url 'hotel:manager_tickets' %}">
+                                <i class="bi bi-ticket me-2"></i>Tickets
+                            </a>
+                        </li>
+                        <li class="nav-item mt-2"><small class="text-muted px-3 text-uppercase">Analytics</small></li>
+                        <li class="nav-item">
+                            <a class="nav-link{% if request.resolver_match.view_name == 'hotel:manager_reports' %} active fw-semibold{% endif %}" href="{% url 'hotel:manager_reports' %}">
+                                <i class="bi bi-graph-up me-2"></i>Reports
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </aside>
+
+        <!-- Main content -->
+        <div class="col-md-9 col-lg-10 ms-sm-auto px-md-4 py-3">
+            {% if messages %}
+            <div class="mb-3">
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            {% block dashboard_content %}{% endblock %}
+        </div>
+    </div>
+</div>
+{% include "hotel/partials/confirm_delete_modal.html" %}
+{% include "hotel/partials/confirm_cancel_modal.html" %}
+{% endblock %}
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var cancelModal = document.getElementById('confirmCancelModal');
+    if (cancelModal) {
+        cancelModal.addEventListener('show.bs.modal', function (event) {
+            var button = event.relatedTarget;
+            var url = button.getAttribute('data-cancel-url');
+            var message = button.getAttribute('data-cancel-message');
+            document.getElementById('cancelModalForm').action = url;
+            document.getElementById('cancelModalMessage').textContent = message;
+        });
+    }
+});
+</script>
+{% endblock %}

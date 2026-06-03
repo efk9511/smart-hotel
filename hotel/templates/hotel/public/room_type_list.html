@@ -1,0 +1,61 @@
+{% extends "hotel/base.html" %}
+{% load static %}
+{% block title %}Room Types{% endblock %}
+{% block content %}
+<div class="container py-4">
+    <h1 class="fw-bold mb-2">Our Room Types</h1>
+    <p class="text-muted mb-4">Choose the perfect seaside room for your stay.</p>
+    <div class="row g-4">
+        {% for room in room_types %}
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 shadow-sm">
+                {% if room.static_image %}
+                    <img src="{% static room.static_image %}" class="card-img-top" alt="{{ room.name }}" style="height: 220px; object-fit: cover;" onerror="this.onerror=null;this.src='{% static 'images/rooms/default_room.png' %}'">
+                {% elif room.image %}
+                    <img src="{{ room.image.url }}" class="card-img-top" alt="{{ room.name }}" style="height: 220px; object-fit: cover;">
+                {% else %}
+                    {% if "City" in room.name %}
+                    <div class="card-img-top room-img-placeholder city-view" style="height: 220px;">
+                    {% elif "Presidential" in room.name %}
+                    <div class="card-img-top room-img-placeholder presidential-view" style="height: 220px;">
+                    {% elif "Executive" in room.name %}
+                    <div class="card-img-top room-img-placeholder executive-view" style="height: 220px;">
+                    {% elif "Family" in room.name %}
+                    <div class="card-img-top room-img-placeholder family-view" style="height: 220px;">
+                    {% else %}
+                    <div class="card-img-top room-img-placeholder sea-view" style="height: 220px;">
+                    {% endif %}
+                        <i class="bi bi-building" style="font-size: 4rem;"></i>
+                    </div>
+                {% endif %}
+                <div class="card-body">
+                    <h5 class="card-title">{{ room.name }}</h5>
+                    <p class="card-text text-muted">{{ room.description|truncatewords:25 }}</p>
+                    <div class="mb-2">
+                        <span class="badge bg-info me-1"><i class="bi bi-people"></i> Up to {{ room.capacity }} guests</span>
+                        {% if room.amenities %}
+                            {% for amenity in room.amenity_list|slice:":3" %}
+                                <span class="badge bg-secondary">{{ amenity }}</span>
+                            {% endfor %}
+                            {% if room.amenity_list|length > 3 %}
+                                <span class="badge bg-secondary">+{{ room.amenity_list|length|add:"-3" }}</span>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                    <h4 class="text-primary fw-bold">${{ room.price_per_night }} <small class="text-muted fw-normal">/ night</small></h4>
+                </div>
+                <div class="card-footer bg-transparent d-flex gap-2">
+                    <a href="{% url 'hotel:room_type_detail' room.id %}" class="btn btn-outline-primary flex-fill">Details</a>
+                    <a href="{% url 'hotel:start_reservation' %}?room_type={{ room.id }}" class="btn btn-primary flex-fill">Book Now</a>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12 text-center py-5">
+            <i class="bi bi-building-x" style="font-size: 3rem;"></i>
+            <p class="text-muted mt-2">No room types available at the moment.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

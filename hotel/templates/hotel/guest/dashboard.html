@@ -1,0 +1,127 @@
+{% extends "hotel/dashboard_base.html" %}
+{% block title %}Guest Dashboard{% endblock %}
+{% block dashboard_content %}
+    <h1 class="fw-bold mb-4"><i class="bi bi-speedometer2"></i> Guest Dashboard</h1>
+    <p class="text-muted">Welcome back, {{ user.first_name|default:user.username }}!</p>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card border-primary h-100">
+                <div class="card-body text-center">
+                    <i class="bi bi-calendar-check text-primary" style="font-size: 2rem;"></i>
+                    <h3 class="mt-2">{{ reservation_count }}</h3>
+                    <p class="text-muted mb-0">Total Reservations</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-warning h-100">
+                <div class="card-body text-center">
+                    <i class="bi bi-ticket text-warning" style="font-size: 2rem;"></i>
+                    <h3 class="mt-2">{{ open_ticket_count }}</h3>
+                    <p class="text-muted mb-0">Open Tickets</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-info h-100">
+                <div class="card-body text-center">
+                    <i class="bi bi-ticket-check text-info" style="font-size: 2rem;"></i>
+                    <h3 class="mt-2">{{ ticket_count }}</h3>
+                    <p class="text-muted mb-0">Total Tickets</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-md-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-calendar3"></i> Active Room Reservations</h5>
+                    <a href="{% url 'hotel:start_reservation' %}" class="btn btn-sm btn-primary">New Booking</a>
+                </div>
+                <div class="card-body">
+                    {% if active_reservations %}
+                    <div class="list-group list-group-flush">
+                        {% for res in active_reservations %}
+                        <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                            <a href="{% url 'hotel:my_room_reservation_detail' res.id %}" class="text-decoration-none flex-grow-1">
+                                <strong>{{ res.room_type.name }}</strong>
+                                <br><small>{{ res.check_in|date:"M d" }} - {{ res.check_out|date:"M d" }}</small>
+                                {% if res.room %}
+                                <br><small class="text-muted">Room {{ res.room.room_number }} (Floor {{ res.room.floor }})</small>
+                                {% endif %}
+                            </a>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge {% if res.status == 'confirmed' %}bg-success{% else %}bg-warning{% endif %}">{{ res.get_status_display }}</span>
+                                {% if res.id in cancelable_ids %}
+                                <button type="button" class="btn btn-sm btn-outline-warning" data-bs-toggle="modal" data-bs-target="#confirmCancelModal"
+                                    data-cancel-url="{% url 'hotel:cancel_reservation' res.id %}"
+                                    data-cancel-message="Cancel reservation for {{ res.room_type.name }} ({{ res.check_in|date:"M d" }} - {{ res.check_out|date:"M d" }})?">
+                                    <i class="bi bi-x-circle"></i>
+                                </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center my-3">No active reservations.</p>
+                    <a href="{% url 'hotel:start_reservation' %}" class="btn btn-primary w-100">Book a Room</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-water"></i> Common Area Reservations</h5>
+                    <a href="{% url 'hotel:create_common_reservation' %}" class="btn btn-sm btn-primary">New Reservation</a>
+                </div>
+                <div class="card-body">
+                    {% if common_reservations %}
+                    <div class="list-group list-group-flush">
+                        {% for res in common_reservations %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>{{ res.common_area.name }}</strong>
+                                <br><small>{{ res.reservation_date|date:"M d" }} {{ res.start_time|time:"H:i" }}-{{ res.end_time|time:"H:i" }}</small>
+                            </div>
+                            <span class="badge {% if res.status == 'confirmed' %}bg-success{% else %}bg-warning{% endif %}">{{ res.get_status_display }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center my-3">No common area reservations.</p>
+                    <a href="{% url 'hotel:create_common_reservation' %}" class="btn btn-primary w-100">Reserve Common Area</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mt-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="bi bi-ticket"></i> Recent Tickets</h5>
+            <a href="{% url 'hotel:create_ticket' %}" class="btn btn-sm btn-primary">New Ticket</a>
+        </div>
+        <div class="card-body">
+            {% if recent_tickets %}
+            <div class="list-group list-group-flush">
+                {% for ticket in recent_tickets %}
+                <a href="{% url 'hotel:ticket_detail' ticket.id %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>{{ ticket.title }}</strong>
+                        <br><small class="text-muted">{{ ticket.get_category_display }}</small>
+                    </div>
+                    {% include "hotel/partials/ticket_badges.html" %}
+                </a>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-muted text-center my-3">No tickets yet.</p>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}

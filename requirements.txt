@@ -1,0 +1,10 @@
+asgiref==3.11.1
+Django==6.0.5
+dj-database-url
+djangorestframework==3.17.1
+gunicorn==26.0.0
+Pillow
+python-decouple==3.8
+whitenoise==6.12.0
+sqlparse==0.5.5
+tzdata==2025.2

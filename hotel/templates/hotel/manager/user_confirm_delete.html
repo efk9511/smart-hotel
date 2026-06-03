@@ -1,0 +1,23 @@
+{% extends "hotel/dashboard_base.html" %}
+{% block title %}Delete User{% endblock %}
+{% block dashboard_content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-sm border-danger">
+                <div class="card-body text-center p-4">
+                    <i class="bi bi-exclamation-triangle text-danger" style="font-size: 3rem;"></i>
+                    <h3 class="mt-3">Confirm Delete</h3>
+                    <p>Are you sure you want to delete user <strong>{{ delete_user.username }}</strong>?</p>
+                    <p class="text-muted">This action cannot be undone.</p>
+                    <form method="post">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger"><i class="bi bi-trash"></i> Delete</button>
+                        <a href="{% url 'hotel:manager_users' %}" class="btn btn-outline-secondary">Cancel</a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

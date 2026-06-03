@@ -1,0 +1,25 @@
+{% extends "hotel/dashboard_base.html" %}
+{% block title %}Delete Offer{% endblock %}
+{% block dashboard_content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-lg-6 mx-auto">
+            <div class="card shadow-sm text-center">
+                <div class="card-body py-5">
+                    <i class="bi bi-exclamation-triangle text-danger" style="font-size: 3rem;"></i>
+                    <h3 class="mt-3">Delete Offer</h3>
+                    <p>Are you sure you want to delete "{{ offer.title }}"?</p>
+                    <p class="text-muted small">This action cannot be undone.</p>
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-center gap-2">
+                            <button type="submit" class="btn btn-danger"><i class="bi bi-trash"></i> Delete</button>
+                            <a href="{% url 'hotel:manager_offers' %}" class="btn btn-outline-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

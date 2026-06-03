@@ -1,0 +1,41 @@
+{% extends "hotel/dashboard_base.html" %}
+{% block title %}Ticket #{{ ticket.id }}{% endblock %}
+{% block dashboard_content %}
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'hotel:guest_dashboard' %}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'hotel:my_tickets' %}">Tickets</a></li>
+                    <li class="breadcrumb-item active">Ticket #{{ ticket.id }}</li>
+                </ol>
+            </nav>
+            <div class="card shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">{{ ticket.title }}</h4>
+                    <div>{% include "hotel/partials/ticket_badges.html" %}</div>
+                </div>
+                <div class="card-body">
+                    <p><strong>Category:</strong> {{ ticket.get_category_display }}</p>
+                    <p><strong>Description:</strong></p>
+                    <p>{{ ticket.description|linebreaks }}</p>
+                    <p><small class="text-muted">Created: {{ ticket.created_at|date:"F d, Y H:i" }} | Updated: {{ ticket.updated_at|date:"F d, Y H:i" }}</small></p>
+                </div>
+            </div>
+            {% if notes %}
+            <div class="card shadow-sm mt-3">
+                <div class="card-header"><h5 class="mb-0">Updates</h5></div>
+                <div class="card-body">
+                    {% for note in notes %}
+                    <div class="mb-3 pb-2 border-bottom">
+                        <strong>{{ note.user.get_full_name|default:note.user.username }}</strong>
+                        <small class="text-muted ms-2">{{ note.created_at|date:"M d, Y H:i" }}</small>
+                        <p class="mb-0 mt-1">{{ note.note|linebreaks }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}

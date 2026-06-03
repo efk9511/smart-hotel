@@ -1,0 +1,41 @@
+{% extends "hotel/dashboard_base.html" %}
+{% block title %}Room Type Management{% endblock %}
+{% block dashboard_content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="fw-bold mb-0"><i class="bi bi-building"></i> Room Type Management</h1>
+        <a href="{% url 'hotel:manager_room_type_create' %}" class="btn btn-primary"><i class="bi bi-plus"></i> Add Room Type</a>
+    </div>
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Price/Night</th>
+                        <th>Capacity</th>
+                        <th>Active</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for rt in room_types %}
+                    <tr>
+                        <td>{{ rt.name }}</td>
+                        <td>${{ rt.price_per_night }}</td>
+                        <td>{{ rt.capacity }}</td>
+                        <td>{% if rt.is_active %}<i class="bi bi-check-circle text-success"></i>{% else %}<i class="bi bi-x-circle text-danger"></i>{% endif %}</td>
+                        <td>
+                            <a href="{% url 'hotel:manager_room_type_edit' rt.id %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></a>
+                            <a href="{% url 'hotel:manager_room_type_delete' rt.id %}" class="btn btn-sm btn-outline-danger" data-delete-url="{% url 'hotel:manager_room_type_delete' rt.id %}" data-item-name="{{ rt.name }}"><i class="bi bi-trash"></i></a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="5" class="text-center text-muted py-4">No room types found.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

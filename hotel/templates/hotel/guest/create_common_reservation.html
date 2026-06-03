@@ -1,0 +1,26 @@
+{% extends "hotel/dashboard_base.html" %}
+{% block title %}Reserve Common Area{% endblock %}
+{% block dashboard_content %}
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <h1 class="fw-bold mb-4"><i class="bi bi-water"></i> Reserve Common Area</h1>
+            <div class="card shadow-sm">
+                <div class="card-body p-4">
+                    <form method="post">
+                        {% csrf_token %}
+                        {% for field in form %}
+                        <div class="mb-3">
+                            <label class="form-label">{{ field.label }}</label>
+                            {{ field }}
+                            {% if field.errors %}
+                            <div class="text-danger small">{{ field.errors|striptags }}</div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                        <button type="submit" class="btn btn-primary w-100">Create Reservation</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

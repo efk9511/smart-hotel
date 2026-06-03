@@ -1,0 +1,44 @@
+{% extends "hotel/dashboard_base.html" %}
+{% block title %}Offer Management{% endblock %}
+{% block dashboard_content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="fw-bold mb-0"><i class="bi bi-gift"></i> Offer Management</h1>
+        <a href="{% url 'hotel:manager_offer_create' %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Create Offer</a>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Type</th>
+                        <th>Common Area</th>
+                        <th>Price</th>
+                        <th>Active</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for offer in offers %}
+                    <tr>
+                        <td>{{ offer.title }}</td>
+                        <td><span class="badge bg-info">{{ offer.get_offer_type_display }}</span></td>
+                        <td>{{ offer.common_area.name|default:"-" }}</td>
+                        <td>{% if offer.is_free_for_guests %}<span class="badge bg-success">Free</span>{% elif offer.price %}${{ offer.price }}{% else %}-{% endif %}</td>
+                        <td>{% if offer.is_active %}<span class="badge bg-success">Active</span>{% else %}<span class="badge bg-secondary">Inactive</span>{% endif %}</td>
+                        <td>
+                            <a href="{% url 'hotel:manager_offer_edit' offer.id %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></a>
+                            <a href="{% url 'hotel:manager_offer_delete' offer.id %}" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="6" class="text-center text-muted py-4">No offers found.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

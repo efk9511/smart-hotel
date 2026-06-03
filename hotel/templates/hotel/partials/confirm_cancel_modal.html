@@ -1,0 +1,21 @@
+<div class="modal fade" id="confirmCancelModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-x-circle text-warning"></i> Confirm Cancellation</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p id="cancelModalMessage">Are you sure you want to cancel this reservation?</p>
+                <p class="text-muted small mb-0">This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Keep Reservation</button>
+                <form id="cancelModalForm" method="post" action="">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-warning"><i class="bi bi-x-circle"></i> Cancel Reservation</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

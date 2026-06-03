@@ -1,0 +1,8 @@
+<span class="d-flex gap-1">
+    <span class="badge {% if ticket.priority == 'urgent' %}bg-danger{% elif ticket.priority == 'high' %}bg-warning text-dark{% elif ticket.priority == 'medium' %}bg-info text-dark{% else %}bg-secondary{% endif %}">
+        {{ ticket.get_priority_display }}
+    </span>
+    <span class="badge {% if ticket.status == 'open' %}bg-danger{% elif ticket.status == 'assigned' %}bg-primary{% elif ticket.status == 'in_progress' %}bg-warning text-dark{% elif ticket.status == 'resolved' %}bg-success{% else %}bg-secondary{% endif %}">
+        {{ ticket.get_status_display }}
+    </span>
+</span>
